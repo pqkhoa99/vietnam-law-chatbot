@@ -69,7 +69,7 @@ To run the application, follow these steps:
    ```bash
    # Install dependencies
    uv pip install -e .
-   ```
+   
 
 5. **Set up the environment variables**:
 
@@ -78,7 +78,7 @@ To run the application, follow these steps:
 6. **Run the application**:
 
    ```bash
-   uvicorn app.api.main:app --reload
+   uvicorn main:app --reload
    ```
 
    The application will be available at `http://127.0.0.1:8000`.
