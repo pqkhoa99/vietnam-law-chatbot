@@ -44,6 +44,10 @@ class Settings(BaseSettings):
         case_sensitive=True,
     )
 
+    OPENAI_API_KEY: str = "OPENAI_API_KEY"
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+    OPENAI_MODEL: str = "OPENAI_MODEL", "gpt-3.5-turbo"
+
 
 # Create global settings instance
 settings = Settings()
