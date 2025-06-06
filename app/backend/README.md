@@ -1,6 +1,6 @@
 # Vietnam Legal Chatbot Backend
 
-This directory contains the backend service for the Vietnam Legal Chatbot application.
+This directory contains the backend service for the Vietnam Legal Chatbot application, which provides a retrieval-augmented generation system for Vietnamese legal documents.
 
 ## Architecture
 
@@ -9,35 +9,61 @@ The backend implements a Retrieval-Augmented Generation (RAG) system with:
 - **FastAPI**: Web framework for API endpoints
 - **Qdrant**: Vector database for semantic search
 - **Neo4j**: Graph database for structured legal relationships
-- **LangChain**: Framework for LLM integration
-- **Sentence Transformers**: For text embeddings
+- **Sentence Transformers**: For multilingual text embeddings
+- **OpenAI API**: For LLM-based text generation
 
 ## Directory Structure
 
 ```
-app/
-├── api/                # FastAPI application
-│   ├── main.py         # Entry point for the API
-│   ├── routers/        # API routers
-│   └── dependencies/   # Dependency injection
-├── services/           # Business logic
-│   ├── legal_service.py  # Service for legal data processing
-│   └── user_service.py   # Service for user-related operations
-├── models/             # Pydantic models for data validation
-├── schemas/            # Database schemas
-├── utils/              # Utility functions
-└── config.py           # Configuration settings
+backend/
+├── api/                   # FastAPI application
+│   ├── v1/                # API version 1 endpoints
+│   │   └── endpoints/     # Specific endpoint implementations
+│   └── routes.py          # API router configuration
+├── core/                  # Core application components
+│   ├── config.py          # Configuration settings
+│   └── prompts.py         # System prompts for LLMs
+├── db/                    # Database integrations
+│   ├── neo4j.py           # Neo4j graph database client
+│   └── qdrant.py          # Qdrant vector database client
+├── models/                # Data models
+│   └── schemas.py         # Pydantic schemas for API
+├── services/              # Business logic
+│   ├── chat.py            # Chat service implementation
+│   └── document.py        # Document processing service
+├── tools/                 # Utility tools
+│   ├── crawl.py           # VBPL document crawler
+│   ├── chunking.py        # Document chunking logic
+│   └── test_indexing.py   # Testing script for indexing
+├── chunking/              # Storage for chunked documents
+├── main.py                # Application entry point
+└── pyproject.toml         # Project dependencies and metadata
 ```
 
-## Running the Application
+## Features
 
-To run the application, follow these steps:
+- **Legal Document Crawling**: Automatically extract documents from VBPL (Vietnam Government Portal)
+- **Document Chunking**: Split documents into semantically meaningful chunks using both rule-based and LLM-based approaches
+- **Vector Search**: Find semantically similar content based on user queries
+- **Graph-Based Relationships**: Track references between legal documents
+- **Conversational Interface**: Provide natural language responses to legal questions
+
+## Setup and Running the Application
+
+### Prerequisites
+
+- Python 3.11+
+- Neo4j database (local or remote)
+- Qdrant vector database (local or remote)
+- OpenAI API key (for LLM functionality)
+
+### Installation
 
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/yourusername/vietnam-legal-chatbot-backend.git
-   cd vietnam-legal-chatbot-backend
+   git clone https://github.com/pqkhoa99/vietnam-legal-chatbot.git
+   cd vietnam-legal-chatbot/app/backend
    ```
 
 2. **Install `uv` using pipx**:
@@ -54,7 +80,7 @@ To run the application, follow these steps:
 3. **Create and activate a virtual environment**:
 
    ```bash
-   # Create a virtual environment
+   # Create a virtual environment with uv
    uv venv
 
    # Activate the virtual environment
@@ -64,28 +90,62 @@ To run the application, follow these steps:
    # .venv\Scripts\activate
    ```
 
-4. **Install the dependencies**:
+4. **Install dependencies**:
 
    ```bash
-   # Install dependencies
+   # Install dependencies with uv for faster installation
    uv pip install -e .
-   
-
-5. **Set up the environment variables**:
-
-   Create a `.env` file in the root directory and add the necessary environment variables. You can refer to the `.env.example` file for the required variables.
-
-6. **Run the application**:
-
-   ```bash
-   uvicorn main:app --reload
    ```
 
-   The application will be available at `http://127.0.0.1:8000`.
+5. **Set up environment variables**:
+
+   Copy the `.env.example` file to `.env` and edit it with your configuration:
+   
+   ```bash
+   cp .env.example .env
+   # Edit .env with your preferred editor
+   ```
+
+### Running the Application
+
+Start the FastAPI application with:
+
+```bash
+# Using uvicorn
+python -m uvicorn main:app --reload
+
+# Or if you prefer using uv to run the script
+uv run -m uvicorn main:app --reload
+```
+
+The API will be available at `http://localhost:8000` with documentation at `http://localhost:8000/docs`.
+
+## Data Processing Workflow
+
+1. **Document Crawling**: Use `VBPLCrawler` to extract legal documents from VBPL
+2. **Document Chunking**: Process documents with `VBPLChunker` using either:
+   - `chunking_by_prefix`: Rule-based approach using regex patterns
+   - `chunking_with_llm`: AI-powered chunking using LLM
+3. **Indexing**: Store document chunks in Qdrant for semantic search
+4. **Knowledge Graph**: Create relationships between legal entities in Neo4j
+5. **Retrieval & Generation**: Retrieve relevant chunks and generate answers
+
+### Running the Crawler and Chunker
+
+To test document crawling and chunking:
+
+```bash
+python -m tools.test_indexing [document_id]
+```
+
+This will:
+1. Crawl the specified document from VBPL
+2. Apply chunking to break it into structured sections
+3. Save the result to the `chunking/` directory
 
 ## API Documentation
 
-The API documentation is automatically generated by FastAPI and can be accessed at `http://127.0.0.1:8000/docs`.
+The API documentation is automatically generated by FastAPI and can be accessed at `http://localhost:8000/docs`.
 
 ## License
 

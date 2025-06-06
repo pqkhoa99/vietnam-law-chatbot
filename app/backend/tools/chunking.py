@@ -184,7 +184,7 @@ class VBPLChunker:
         response = self.openai_client.chat.completions.create(
             model=self.settings.OPENAI_MODEL if self.settings else "gpt-4",
             messages=[
-                {"role": "system", "content": self.SYSTEMP_PROMPT_PARSE},
+                {"role": "system", "content": self.CHUNKING_SYSTEM_PROMPT},
                 {"role": "user", "content": modified_content}
             ],
             temperature=0.8,
