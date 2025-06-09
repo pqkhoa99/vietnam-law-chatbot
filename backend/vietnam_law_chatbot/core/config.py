@@ -4,9 +4,13 @@ Configuration settings for the application.
 import os
 from typing import List
 
-from pydantic import AnyHttpUrl
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from pydantic import AnyHttpUrl
+from pydantic_settings import BaseSettings
+from dotenv import load_dotenv, find_dotenv
+
+# Load environment variables from .env file
+load_dotenv(find_dotenv(), override=True)
 
 class Settings(BaseSettings):
     """Application settings."""
@@ -25,7 +29,7 @@ class Settings(BaseSettings):
     
     # Qdrant settings
     QDRANT_URL: str = "http://localhost:6333"
-    QDRANT_COLLECTION_NAME: str = "vietnam_legal_docs"
+    QDRANT_INDEX: str = "vietnam_legal_docs"
     
     # Neo4j settings
     NEO4J_URI: str = "bolt://localhost:7687"
@@ -35,18 +39,23 @@ class Settings(BaseSettings):
     # LLM settings
     DEFAULT_MODEL_NAME: str = "gpt-3.5-turbo"
     
-    # Embedding model
+    # Embedding settings
+    EMBEDDER_TYPE: str = "openai"  # Options: "openai", "sentence-transformers"
+    SPARSE_EMBEDDING_MODEL: str = "Qdrant/bm25"  # For sparse embeddings, e.g., BM25
     EMBEDDING_MODEL_NAME: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    EMBEDDING_BATCH_SIZE: int = 32
+    EMBEDDING_DIMENSIONS: int = 384
     
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-    )
+    
+    # Retrieval settings
+    DOCUMENT_STORE_TYPE: str = "qdrant_hybrid"
+    RETRIEVER_TOP_K: int = 5
+    
 
     OPENAI_API_KEY: str = "OPENAI_API_KEY"
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
-    OPENAI_MODEL: str = "OPENAI_MODEL", "gpt-3.5-turbo"
+    OPENAI_MODEL: str = "gpt-3.5-turbo"
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
 
 
 # Create global settings instance

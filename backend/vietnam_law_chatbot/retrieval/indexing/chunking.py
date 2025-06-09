@@ -2,7 +2,7 @@ import re
 import json
 from enum import Enum
 from loguru import logger
-from core.prompts import CHUNKING_SYSTEM_PROMPT
+from vietnam_law_chatbot.core.prompts import CHUNKING_SYSTEM_PROMPT
 
 class VBPLSection(Enum):
     """

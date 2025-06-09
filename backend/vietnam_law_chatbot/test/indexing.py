@@ -3,8 +3,8 @@ import sys
 import os
 import logging
 from loguru import logger
-from tools.crawl import VBPLCrawler
-from tools.chunking import VBPLChunker
+from vietnam_law_chatbot.retrieval.indexing.crawler import VBPLCrawler
+from vietnam_law_chatbot.retrieval.indexing.chunking import VBPLChunker
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
