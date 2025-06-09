@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vietnam-legal-chatbot-backend"
+version = "0.1.0"
+description = "Backend service for the Vietnam Legal Chatbot application"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    {name = "Vietnam Legal Chatbot Team"},
+]
+dependencies = [
+    # API Framework
+    "fastapi>=0.95.0",
+    "uvicorn>=0.21.0", 
+    "pydantic>=2.0.0",
+    
+    # RAG & LLM Components
+    "langchain>=0.1.0",
+    "langchain-community>=0.0.10",
+    "sentence-transformers>=2.2.0",
+    
+    # Database Clients
+    "qdrant-client>=1.7.0",
+    "neo4j>=5.14.0",
+    
+    # LLM & Text Processing
+    "transformers>=4.36.0",
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    
+    # Document Processing
+    "unstructured>=0.10.30",
+    "unstructured-inference>=0.7.11",
+    "python-docx>=0.8.11",
+    "pdf2image>=1.16.3",
+    "pypdf>=3.17.0",
+    
+    # Utilities
+    "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.6",
+    "tqdm>=4.66.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["api", "core", "db", "indexing", "models", "pipeline", "services", "utils"]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"

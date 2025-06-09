@@ -91,3 +91,7 @@ chunk_data/
 *.tmp
 *.temp
 temp/
+
+# Temporary folders
+temp/
+chunking/
