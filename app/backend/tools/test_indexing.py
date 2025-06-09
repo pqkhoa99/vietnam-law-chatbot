@@ -137,9 +137,14 @@ def main():
         test_crawl_and_chunk_by_prefix(document_id)
         
         # To test LLM-based chunking, uncomment and provide OpenAI client:
-        # 
         # from openai import OpenAI
-        # client = OpenAI(api_key="your-api-key")
+        # from core.config import settings
+
+        # client = OpenAI(
+        #     api_key=settings.OPENAI_API_KEY,
+        #     base_url=settings.OPENAI_BASE_URL
+        # )
+        
         # test_crawl_and_chunk_with_llm(document_id, client)
     
     logger.info("Test completed")
