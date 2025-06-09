@@ -109,44 +109,15 @@ class VBPLChunker:
                             chuong_data["children"].append(dieu_data)
                     data.append(chuong_data)
         else:
-            muc_matches = muc_regex.findall(content)
-            if muc_matches:
-                for muc in muc_matches:
-                    muc_data = {
-                        "type": VBPLSection.SECTION.name,
-                        "id_text": muc[0].strip(),
-                        "title": "",
-                        "children": []
+            # Check dieu
+            dieu_matches = dieu_regex.findall(content)
+            if dieu_matches:
+                for dieu in dieu_matches:
+                    dieu_data = {
+                        "type": VBPLSection.ARTICLE.name,
+                        "content": dieu.replace('*', '').strip(),
                     }
-                    
-                    title_match = title_regex.search(muc[1])
-                    if title_match:
-                        muc_data["title"] = re.sub(r'\s+', ' ', re.sub(r'[#*_\[\]\(\)-]', '', title_match.group(0))).strip()
-                        muc_content = muc[1].replace(muc_data["title"], "").strip()
-                    else:
-                        muc_data["title"] = ""
-                        muc_content = muc[1].strip()
-
-                    dieu_matches = dieu_regex.findall(muc_content)
-
-                    for dieu in dieu_matches:
-                        dieu_data = {
-                            "type": VBPLSection.ARTICLE.name,
-                            "content": dieu.replace('*', '').strip(),
-                        }
-                        muc_data["children"].append(dieu_data)
-
-                    data.append(muc_data)
-            else:
-                # Check dieu
-                dieu_matches = dieu_regex.findall(content)
-                if dieu_matches:
-                    for dieu in dieu_matches:
-                        dieu_data = {
-                            "type": VBPLSection.ARTICLE.name,
-                            "content": dieu.replace('*', '').strip(),
-                        }
-                        data.append(dieu_data)
+                    data.append(dieu_data)
 
         # Create the final result dictionary
         dict_result = {
