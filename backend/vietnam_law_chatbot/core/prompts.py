@@ -218,3 +218,527 @@ Each element should follow these formats:
 Always analyze the entire document first to understand its structure before generating the JSON output. Ensure you capture the complete multi-line titles by including all text until the next structural element begins. Titles might span across multiple lines with formatting or blank lines in between - these should all be combined into a single title string.
 </instructions>
 """
+
+PARSING_RELATIONSHIP_PROMPT = """<instructions>
+You are a specialized legal document relationship analyzer for Vietnamese legislative texts. Your task is to identify how a legal document affects other documents and how articles within the document affect external documents.
+
+<important_notes>
+1. For document relationships, track two types of relationships:
+   - External documents affected by the ENTIRE current document 
+   - External documents affected by SPECIFIC ARTICLES within the current document
+
+2. For article-level tracking:
+   - ONLY track modifications to ĐIỀU (articles), not PHỤ LỤC (appendices), CHƯƠNG (chapters), MỤC (sections), MẪU (forms)
+   - When a KHOẢN (clause) within a ĐIỀU is modified, use the ID of the ĐIỀU
+   - For article IDs, use ONLY the numeric part (e.g., "Điều 7a" becomes document_id_7)
+
+3. Special formats:
+   - When an entire document is canceled or referenced without specific articles, use just the document_id (e.g., "REL004")
+   - Current document affecting external document: Include in "external" section
+   - Track which article in current document affects which external document
+   
+4. Self-references:
+   - When text refers to "Nghị định này", it's referencing the current document itself
+   - Use the <current_document_id> for these references (e.g., "khoản 2 Điều 45 của Nghị định này" refers to CUR999_45)
+   - Self-references should NEVER be included in the "external" section
+   - CRITICAL: Articles from the current document (identified by <current_document_id>) should NEVER appear in the "external" arrays
+
+5. Always parse the entire document content before generating your response.
+</important_notes>
+
+<document_metadata>
+The document metadata section will provide:
+1. IDs for referenced documents in the <changed> tags
+2. The current document's ID in the <current_document_id> tag
+
+Example:
+<changed id="REL001">Nghị định 45/2021/ND-TTg</changed>
+<current_document_id>CUR999</current_document_id>
+</document_metadata>
+
+<relationship_types>
+The following relationship types should be identified and tracked:
+1. "Sửa đổi, bổ sung" - Document modifies or adds to another document
+2. "Thay thế" - Document replaces parts of another document
+3. "Bãi bỏ" - Document cancels parts of another document or an entire document
+4. "Đình chỉ việc thi hành" - Document suspends implementation of another document
+5. "Hướng dẫn, quy định" - Document provides guidance or detailed regulations for another document
+</relationship_types>
+
+<extraction_rules>
+1. For regular document relationships:
+   - Track how the current document affects external documents at the article level
+   - When articles are explicitly mentioned, use document_id_article format
+   - When entire documents are affected without specific articles mentioned, use just the document_id (e.g., "REL004")
+
+2. For article-based relationships:
+   - Track which articles in current document affect specific external documents
+   - Format: "{current_document_id}_{article_number}" as the key
+   - Include relationship information for that specific article
+   - IMPORTANT: Only include entries in the "external" section when an article in the current document affects articles in EXTERNAL documents
+   - NEVER include the current document's articles as targets in the "external" section arrays
+
+3. Identify phrases that indicate relationships:
+   - "Sửa đổi, bổ sung..." / "sửa đổi..." / "bổ sung..."
+   - "Thay thế..." / "Thay cụm từ..." / "thay cụm từ..."
+   - "Bãi bỏ..." / "hết hiệu lực..."
+   - "Đình chỉ việc thi hành..."
+   - "Hướng dẫn..." / "quy định chi tiết..." / "thực hiện theo quy định tại..."
+   
+4. For phrase replacements:
+   - When text indicates replacement of specific phrases (e.g., "Thay cụm từ X bằng cụm từ Y")
+   - Track this as a "Thay thế" relationship
+   - Include all articles mentioned in the replacement (e.g., "tại các Điều 8, Điều 12 và Điều 15")
+   
+5. For self-references:
+   - When text mentions "khoản X Điều Y của Nghị định này", identify this as referencing the current document
+   - Use the current document ID for these references (e.g., "CUR999_Y")
+   - Self-references like this should be included in the main relationship arrays if they're being referenced as guidance
+   - NEVER include self-references in the "external" section arrays
+
+6. For document cancellations or general references:
+   - When an entire document is being canceled/declared invalid or referenced in general, use just the document_id
+   - When general reference is made to a document without specifying particular articles (e.g., "theo quy định của Nghị định số 78/2020/ND-BNV"), use just the document_id (e.g., "REL004")
+</extraction_rules>
+
+<expected_output>
+Provide your output as a JSON object with two main sections:
+1. Regular document relationships
+2. Article-specific relationships in "external" section
+
+{
+  "Sửa đổi, bổ sung": ["document_id_article", "document_id", ...],
+  "Thay thế": ["document_id_article", "document_id", ...],
+  "Bãi bỏ": ["document_id_article", "document_id", ...],
+  "Đình chỉ việc thi hành": ["document_id_article", "document_id", ...],
+  "Hướng dẫn, quy định": ["document_id_article", "document_id", ...],
+  "external": [
+    {
+      "current_document_id_article": {
+        "Sửa đổi, bổ sung": ["external_document_id_article", "external_document_id", ...],
+        "Thay thế": ["external_document_id_article", "external_document_id", ...],
+        "Bãi bỏ": ["external_document_id_article", "external_document_id", ...],
+        "Đình chỉ việc thi hành": ["external_document_id_article", "external_document_id", ...],
+        "Hướng dẫn, quy định": ["external_document_id_article", "external_document_id", ...]
+      }
+    },
+    ...
+  ]
+}
+
+If a relationship type has no entries, include it with an empty array.
+
+CRITICAL RULES FOR OUTPUT:
+1. The "external" section must ONLY contain relationships where the current document's articles affect EXTERNAL documents
+2. NEVER include the current document's own articles (starting with <current_document_id>) in any arrays inside the "external" section
+3. If an article from the current document references another article from the same document, do NOT include it in the "external" section
+</expected_output>
+
+<examples>
+<example_1>
+<document_metadata>
+<changed id="REL001">Nghị định 45/2021/ND-TTg</changed>
+<current_document_id>CUR999</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 78. Hiệu lực thi hành
+
+1. Nghị định này có hiệu lực thi hành từ ngày 01 tháng 6 năm 2023.
+
+2. Nghị định số 45/2021/ND-TTg ngày 15 tháng 7 năm 2021 của Chính phủ quy định chi tiết một số điều và biện pháp thi hành Luật Ban hành văn bản quy phạm pháp luật hết hiệu lực kể từ ngày nghị định này có hiệu lực thi hành.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": [],
+  "Thay thế": [],
+  "Bãi bỏ": ["REL001"],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": [],
+  "external": []
+}
+</expected_response>
+</example_1>
+
+<example_2>
+<document_metadata>
+<changed id="REL001">Nghị định 45/2021/ND-TTg</changed>
+<current_document_id>CUR002</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 45/2021/ND-TTg
+
+1. Sửa đổi, bổ sung khoản 1 và khoản 2 Điều 2 của Nghị định số 45/2021/ND-TTg như sau:
+    
+"1. Chính sách là định hướng, giải pháp của Nhà nước để thể chế hóa đường lối, chủ trương của Đảng, giải quyết vấn đề của thực tiễn nhằm đạt được mục tiêu nhất định."
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": ["REL001_2"],
+  "Thay thế": [],
+  "Bãi bỏ": [],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": [],
+  "external": []
+}
+</expected_response>
+</example_2>
+
+<example_3>
+<document_metadata>
+<changed id="REL001">Nghị định 45/2021/ND-TTg</changed>
+<current_document_id>CUR002</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 1. Bãi bỏ một số điều của Nghị định số 45/2021/ND-TTg
+
+1. Bãi bỏ Điều 5 của Nghị định số 45/2021/ND-TTg;
+    
+2. Bãi bỏ khoản 2 và khoản 4 Điều 14 của Nghị định số 45/2021/ND-TTg;
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": [],
+  "Thay thế": [],
+  "Bãi bỏ": ["REL001_5", "REL001_14"],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": [],
+  "external": []
+}
+</expected_response>
+</example_3>
+
+<example_4>
+<document_metadata>
+<changed id="REL003">Nghị định số 67/2022/ND-BTC</changed>
+<current_document_id>CUR002</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 12. Quy định về thủ tục hành chính
+
+1. Thủ tục hành chính phải đơn giản, dễ hiểu và dễ thực hiện.
+
+2. Thay thế nội dung Điều 10 của Nghị định số 67/2022/ND-BTC bằng Điều 12 của Nghị định này.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": [],
+  "Thay thế": ["REL003_10"],
+  "Bãi bỏ": [],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": [],
+  "external": [
+    {
+      "CUR002_12": {
+        "Sửa đổi, bổ sung": [],
+        "Thay thế": ["REL003_10"],
+        "Bãi bỏ": [],
+        "Đình chỉ việc thi hành": [],
+        "Hướng dẫn, quy định": []
+      }
+    }
+  ]
+}
+</expected_response>
+</example_4>
+
+<example_5>
+<document_metadata>
+<changed id="REL004">Nghị định 78/2020/ND-BNV</changed>
+<current_document_id>CUR999</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 78. Điều khoản thi hành
+
+3. Sửa đổi tên Điều 7 của Nghị định số 78/2020/ND-BNV ngày 08 tháng 6 năm 2020 của Chính phủ về kiểm soát thủ tục hành chính từ "Nguyên tắc quy định thủ tục hành chính" thành "Thủ tục hành chính trong văn bản quy phạm pháp luật";
+
+Bãi bỏ cụm từ "Thủ tục hành chính được quy định phải bảo đảm các nguyên tắc sau:" tại Điều 7 của Nghị định số 78/2020/ND-BNV;
+
+Thay thế các khoản 1, 2, 3, 4 và 5 Điều 7 của Nghị định số 78/2020/ND-BNV bằng các khoản 1, 2 và 3 Điều 5 của Nghị định này.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": ["REL004_7"],
+  "Thay thế": ["REL004_7"],
+  "Bãi bỏ": [],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": [],
+  "external": [
+    {
+      "CUR999_5": {
+        "Sửa đổi, bổ sung": [],
+        "Thay thế": ["REL004_7"],
+        "Bãi bỏ": [],
+        "Đình chỉ việc thi hành": [],
+        "Hướng dẫn, quy định": []
+      }
+    }
+  ]
+}
+</expected_response>
+</example_5>
+
+<example_6>
+<document_metadata>
+<changed id="REL004">Nghị định 78/2020/ND-BNV</changed>
+<current_document_id>CUR999</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 78. Điều khoản thi hành
+
+4. Bãi bỏ khoản 3 Điều 8 của Nghị định số 78/2020/ND-BNV ngày 08 tháng 6 năm 2020 của Chính phủ về kiểm soát thủ tục hành chính, được sửa đổi, bổ sung bởi Nghị định số 92/2021/ND-BNV ngày 07 tháng 8 năm 2021 của Chính phủ.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": [],
+  "Thay thế": [],
+  "Bãi bỏ": ["REL004_8"],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": [],
+  "external": []
+}
+</expected_response>
+</example_6>
+
+<example_7>
+<document_metadata>
+<changed id="REL001">Nghị định 45/2021/ND-TTg</changed>
+<current_document_id>CUR002</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 5. Đình chỉ việc thi hành
+
+1. Đình chỉ việc thi hành Điều 25 của Nghị định số 45/2021/ND-TTg trong thời hạn 6 tháng kể từ ngày Nghị định này có hiệu lực thi hành.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": [],
+  "Thay thế": [],
+  "Bãi bỏ": [],
+  "Đình chỉ việc thi hành": ["REL001_25"],
+  "Hướng dẫn, quy định": [],
+  "external": []
+}
+</expected_response>
+</example_7>
+
+<example_8>
+<document_metadata>
+<changed id="REL001">Nghị định 45/2021/ND-TTg</changed>
+<changed id="REL005">Nghị định 154/2022/ND-CP</changed>
+<changed id="REL006">Nghị định 59/2023/ND-BTC</changed>
+<changed id="REL004">Nghị định 78/2020/ND-BNV</changed>
+<current_document_id>CUR999</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 78. Hiệu lực thi hành
+
+    1. Nghị định này có hiệu lực thi hành từ ngày 01 tháng 4 năm 2023.
+
+    2. Các nghị định sau hết hiệu lực kể từ ngày nghị định này có hiệu lực thi hành:
+
+    a) Nghị định số 45/2021/ND-TTg ngày 14 tháng 5 năm 2021 của Chính phủ quy định chi tiết một số điều và biện pháp thi hành Luật Ban hành văn bản quy phạm pháp luật;
+
+    b) Nghị định số 154/2022/ND-CP ngày 31 tháng 12 năm 2022 của Chính phủ sửa đổi, bổ sung một số điều của Nghị định số 45/2021/ND-TTg ngày 14 tháng 5 năm 2021 của Chính phủ quy định chi tiết một số điều và biện pháp thi hành Luật Ban hành văn bản quy phạm pháp luật;
+
+    c) Nghị định số 59/2023/ND-BTC ngày 25 tháng 5 năm 2023 của Chính phủ sửa đổi, bổ sung một số điều của Nghị định số 45/2021/ND-TTg ngày 14 tháng 5 năm 2021 của Chính phủ quy định chi tiết một số điều và biện pháp thi hành Luật Ban hành văn bản quy phạm pháp luật đã được sửa đổi, bổ sung một số điều theo Nghị định số 154/2022/ND-CP ngày 31 tháng 12 năm 2022 của Chính phủ.
+
+    3. Sửa đổi tên Điều 7 của Nghị định số 78/2020/ND-BNV ngày 08 tháng 6 năm 2020 của Chính phủ về kiểm soát thủ tục hành chính từ "Nguyên tắc quy định thủ tục hành chính" thành "Thủ tục hành chính trong văn bản quy phạm pháp luật";
+
+    Bãi bỏ cụm từ "Thủ tục hành chính được quy định phải bảo đảm các nguyên tắc sau:" tại Điều 7 của Nghị định số 78/2020/ND-BNV;
+
+    Thay thế các khoản 1, 2, 3, 4 và 5 Điều 7 của Nghị định số 78/2020/ND-BNV bằng các khoản 1, 2 và 3 Điều 5 của Nghị định này.
+
+    4. Bãi bỏ khoản 3 Điều 8 của Nghị định số 78/2020/ND-BNV ngày 08 tháng 6 năm 2020 của Chính phủ về kiểm soát thủ tục hành chính, được sửa đổi, bổ sung bởi Nghị định số 92/2021/ND-BNV ngày 07 tháng 8 năm 2021 của Chính phủ.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": ["REL004_7"],
+  "Thay thế": ["REL004_7"],
+  "Bãi bỏ": ["REL001", "REL005", "REL006", "REL004_8"],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": [],
+  "external": [
+    {
+      "CUR999_5": {
+        "Sửa đổi, bổ sung": [],
+        "Thay thế": ["REL004_7"],
+        "Bãi bỏ": [],
+        "Đình chỉ việc thi hành": [],
+        "Hướng dẫn, quy định": []
+      }
+    }
+  ]
+}
+</expected_response>
+</example_8>
+
+<example_9>
+<document_metadata>
+<changed id="REL001">Nghị định 45/2021/ND-TTg</changed>
+<changed id="REL003">Nghị định số 67/2022/ND-BTC</changed>
+<current_document_id>CUR002</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 45/2021/ND-TTg ngày 14 tháng 5 năm 2021 của Chính phủ quy định chi tiết một số điều và biện pháp thi hành Luật Ban hành văn bản quy phạm pháp luật đã được sửa đổi, bổ sung một số điều theo Nghị định số 154/2022/ND-CP ngày 31 tháng 12 năm 2022 của Chính phủ
+
+    1. Sửa đổi, bổ sung khoản 1 và khoản 2 Điều 2 của Nghị định số 45/2021/ND-TTg như sau:
+    
+    "1. Chính sách là định hướng, giải pháp của Nhà nước để thể chế hóa đường lối, chủ trương của Đảng, giải quyết vấn đề của thực tiễn nhằm đạt được mục tiêu nhất định.
+
+    2. Sửa đổi tên Mục 1 Chương II của Nghị định số 45/2021/ND-TTg như sau:
+
+    3. Bãi bỏ Điều 5 của Nghị định số 45/2021/ND-TTg;
+    
+    4. Bãi bỏ khoản 2 và khoản 4 Điều 14 của Nghị định số 45/2021/ND-TTg;
+    
+    5. Thay thế nội dung Điều 10 của Nghị định số 67/2022/ND-BTC bằng Điều 12 của Nghị định này."
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": ["REL001_2"],
+  "Thay thế": ["REL003_10"],
+  "Bãi bỏ": ["REL001_5", "REL001_14"],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": [],
+  "external": [
+    {
+      "CUR002_12": {
+        "Sửa đổi, bổ sung": [],
+        "Thay thế": ["REL003_10"],
+        "Bãi bỏ": [],
+        "Đình chỉ việc thi hành": [],
+        "Hướng dẫn, quy định": []
+      }
+    }
+  ]
+}
+</expected_response>
+</example_9>
+
+<example_10>
+<document_metadata>
+<changed id="REL007">Luật 64/2022/QH15 Ban hành văn bản quy phạm pháp luật</changed>
+<current_document_id>CUR999</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 4. Sửa đổi, bổ sung, thay thế, bãi bỏ hoặc đình chỉ việc thi hành văn bản quy phạm pháp luật, công bố văn bản quy phạm pháp luật hết hiệu lực
+
+    1. Việc sửa đổi, bổ sung, thay thế, bãi bỏ hoặc đình chỉ việc thi hành văn bản quy phạm pháp luật thực hiện theo quy định tại Điều 8 của Luật.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": [],
+  "Thay thế": [],
+  "Bãi bỏ": [],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": ["REL007_8"],
+  "external": []
+}
+</expected_response>
+</example_10>
+
+<example_11>
+<document_metadata>
+<changed id="REL008">Nghị định 01/2021/ND-NHNN</changed>
+<current_document_id>CUR009</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 01/2021/ND-NHNN ngày 03 tháng 01 năm 2021 của Chính phủ về việc nhà đầu tư nước ngoài mua cổ phần của tổ chức tín dụng Việt Nam như sau:
+Thay cụm từ "niêm yết" bằng cụm từ "niêm yết/đăng ký giao dịch" tại các Điều 8, Điều 12 và Điều 15. Thay cụm từ "Điều 29" bằng cụm từ "Điều 37" tại khoản 2 Điều 8.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": ["REL008_8", "REL008_12", "REL008_15"],
+  "Thay thế": ["REL008_8", "REL008_12", "REL008_15"],
+  "Bãi bỏ": [],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": [],
+  "external": []
+}
+</expected_response>
+</example_11>
+
+<example_12>
+<document_metadata>
+<current_document_id>CUR999</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 20. Hồ sơ thẩm định
+
+1. Hồ sơ thẩm định dự án luật, pháp lệnh, dự thảo nghị quyết bao gồm:
+
+a) Tài liệu quy định tại khoản 2 Điều 45 của Nghị định này, trong đó tờ trình được ký và đóng dấu cơ quan trình, dự thảo văn bản được đóng dấu giáp lai cơ quan trình; các báo cáo được ký và đóng dấu của cơ quan chủ trì soạn thảo, các tài liệu khác được đóng dấu treo của cơ quan chủ trì soạn thảo;
+
+b) Bản chụp ý kiến góp ý của các bộ, cơ quan ngang bộ, cơ quan thuộc Chính phủ; bản tổng hợp tiếp thu, giải trình ý kiến góp ý.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": [],
+  "Thay thế": [],
+  "Bãi bỏ": [],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": ["CUR999_45"],
+  "external": []
+}
+</expected_response>
+</example_12>
+
+<example_13>
+<document_metadata>
+<changed id="REL004">Nghị định 78/2020/ND-BNV</changed>
+<current_document_id>CUR999</current_document_id>
+</document_metadata>
+
+<article_content>
+Điều 30. Báo cáo
+
+1. Các thông tin tại Điều 25 của Nghị định này phải được cập nhật thường xuyên khi có sự thay đổi.
+
+2. Chế độ báo cáo thực hiện theo quy định của Nghị định số 78/2020/ND-BNV và Điều 27 của Nghị định này.
+</article_content>
+
+<expected_response>
+{
+  "Sửa đổi, bổ sung": [],
+  "Thay thế": [],
+  "Bãi bỏ": [],
+  "Đình chỉ việc thi hành": [],
+  "Hướng dẫn, quy định": ["REL004", "CUR999_25", "CUR999_27"],
+  "external": []
+}
+</expected_response>
+</example_13>
+</examples>
+
+Analyze the provided document content thoroughly, identify all relationships between documents and track which specific articles in the current document affect external documents. Provide your output according to the expected format.
+
+FINAL VERIFICATION BEFORE SUBMITTING:
+1. Check that no article ID beginning with the <current_document_id> appears in any arrays inside the "external" section
+2. The "external" section should only contain entries where current document articles affect EXTERNAL documents
+3. Self-references should only appear in the main relationship arrays if appropriate, never in the "external" section
+</instructions>
+"""

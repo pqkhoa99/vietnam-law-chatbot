@@ -2,7 +2,8 @@ import re
 import json
 from enum import Enum
 from loguru import logger
-from vietnam_law_chatbot.core.prompts import CHUNKING_SYSTEM_PROMPT
+from vietnam_law_chatbot.core.config import settings
+from vietnam_law_chatbot.core.prompts import CHUNKING_SYSTEM_PROMPT, PARSING_RELATIONSHIP_PROMPT
 
 class VBPLSection(Enum):
     """
@@ -19,12 +20,12 @@ class VBPLChunker:
     """
     A class to chunk and parse legal documents from crawled data.
     """
-    def __init__(self, openai_client=None, settings=None):
+    def __init__(self, openai_client=None):
         self.openai_client = openai_client
-        self.settings = settings
         
         # System prompt for LLM parsing
         self.CHUNKING_SYSTEM_PROMPT = CHUNKING_SYSTEM_PROMPT
+        self.PARSING_RELATIONSHIP_PROMPT = PARSING_RELATIONSHIP_PROMPT
 
     def chunking_by_prefix(self, document_data: dict) -> dict:
         """
@@ -51,7 +52,14 @@ class VBPLChunker:
         dieu_regex = re.compile(r'\n*\s*(Điều\s*[0-9]*\\*\.+[\s\S]+?)(?=\n+\s*Điều\s*[0-9]+\\*\.|\Z)')
 
         chuong_matches = chuong_regex.findall(content)
-        if chuong_matches:
+
+        first_type = ""
+        for lines in content.splitlines():
+            if lines.strip().startswith("Chương") or lines.strip().startswith("Mục") or lines.strip().startswith("Điều"):
+                first_type = lines.strip().split()[0]
+                break
+    
+        if chuong_matches and (first_type == "Chương"):
             for chuong in chuong_matches:
                 chuong_data = {
                     "type": VBPLSection.CHAPTER.name,
@@ -109,15 +117,44 @@ class VBPLChunker:
                             chuong_data["children"].append(dieu_data)
                     data.append(chuong_data)
         else:
-            # Check dieu
-            dieu_matches = dieu_regex.findall(content)
-            if dieu_matches:
-                for dieu in dieu_matches:
-                    dieu_data = {
-                        "type": VBPLSection.ARTICLE.name,
-                        "content": dieu.replace('*', '').strip(),
+            muc_matches = muc_regex.findall(content)
+            if muc_matches and (first_type == "Mục"):
+                for muc in muc_matches:
+                    muc_data = {
+                        "type": VBPLSection.SECTION.name,
+                        "id_text": muc[0].strip(),
+                        "title": "",
+                        "children": []
                     }
-                    data.append(dieu_data)
+                    
+                    title_match = title_regex.search(muc[1])
+                    if title_match:
+                        muc_data["title"] = re.sub(r'\s+', ' ', re.sub(r'[#*_\[\]\(\)-]', '', title_match.group(0))).strip()
+                        muc_content = muc[1].replace(muc_data["title"], "").strip()
+                    else:
+                        muc_data["title"] = ""
+                        muc_content = muc[1].strip()
+
+                    dieu_matches = dieu_regex.findall(muc_content)
+
+                    for dieu in dieu_matches:
+                        dieu_data = {
+                            "type": VBPLSection.ARTICLE.name,
+                            "content": dieu.replace('*', '').strip(),
+                        }
+                        muc_data["children"].append(dieu_data)
+
+                    data.append(muc_data)
+            else:
+                # Check dieu
+                dieu_matches = dieu_regex.findall(content)
+                if dieu_matches:
+                    for dieu in dieu_matches:
+                        dieu_data = {
+                            "type": VBPLSection.ARTICLE.name,
+                            "content": dieu.replace('*', '').strip(),
+                        }
+                        data.append(dieu_data)
 
         # Create the final result dictionary
         dict_result = {
@@ -153,7 +190,7 @@ class VBPLChunker:
 
         # Call the LLM for parsing
         response = self.openai_client.chat.completions.create(
-            model=self.settings.OPENAI_MODEL if self.settings else "gpt-4",
+            model=settings.OPENAI_PARSE_MODEL,
             messages=[
                 {"role": "system", "content": self.CHUNKING_SYSTEM_PROMPT},
                 {"role": "user", "content": modified_content}
@@ -193,3 +230,115 @@ class VBPLChunker:
             "document_info": document_data.get("document_info", {}),
             "data": response_json,
         }
+
+    def chunking_articles(self, document_data: dict) -> dict:
+        """
+        Chunks the document content into articles based on the 'Điều' prefix.
+
+        Args:
+            document_data (dict): Dictionary from the crawler containing document content and info.
+
+        Returns:
+            dict: A dictionary containing the parsed information.
+        """
+        if not document_data:
+            return {}
+        
+        data = document_data.get("data", [])
+        if not data:
+            return {}
+        
+        articles = []
+        
+        dieu_regex_number = re.compile(r'Điều\s*([0-9]+)')
+        
+        for first_level in data:
+            if first_level.get("type") == VBPLSection.CHAPTER.name:
+                for section in first_level.get("children", []):
+                    if section.get("type") == VBPLSection.SECTION.name:
+                        for article in section.get("children", []):
+                            if article.get("type") == VBPLSection.ARTICLE.name:
+                                article["document_id"] = document_data.get("document_info", {}).get("document_id", "")
+                                article["id"] = document_data.get("document_info", {}).get("document_id", "") + "_" + dieu_regex_number.search(article["content"]).group(1)
+                                article["chapter"] = first_level.get("id_text", "") + ": " + first_level.get("title", "")
+                                article["section"] = section.get("id_text", "") + ": " + section.get("title", "")
+                                articles.append(article)
+                    else:
+                        section["document_id"] = document_data.get("document_info", {}).get("document_id", "")
+                        section["id"] = document_data.get("document_info", {}).get("document_id", "") + "_" + dieu_regex_number.search(section["content"]).group(1)
+                        section["chapter"] = first_level.get("id_text", "") + ": " + first_level.get("title", "")
+                        section["section"] = None
+                        articles.append(section)
+            elif first_level.get("type") == VBPLSection.SECTION.name:
+                for article in first_level.get("children", []):
+                    if article.get("type") == VBPLSection.ARTICLE.name:
+                        article["document_id"] = document_data.get("document_info", {}).get("document_id", "")
+                        article["id"] = document_data.get("document_info", {}).get("document_id", "") + "_" + dieu_regex_number.search(article["content"]).group(1)
+                        article["chapter"] = None
+                        article["section"] = first_level.get("id_text", "") + ": " + first_level.get("title", "")
+                        articles.append(article)
+            else:
+                if first_level.get("type") == VBPLSection.ARTICLE.name:
+                    first_level["document_id"] = document_data.get("document_info", {}).get("document_id", "")
+                    first_level["id"] = document_data.get("document_info", {}).get("document_id", "") + "_" + dieu_regex_number.search(first_level["content"]).group(1)
+                    first_level["chapter"] = None
+                    first_level["section"] = None
+                    articles.append(first_level)
+
+        # Multithreaded chunking
+        def chunk_article(article):
+            """
+            Helper function to chunk a single article using the OpenAI client.
+            """
+            relationship = document_data.get("document_info", {}).get("relationship", {})
+            relationship = json.dumps(relationship, ensure_ascii=False, indent=2)
+            relationship = re.sub(r'\([\s\S]+?\)', '', relationship)
+            content = f"""
+                <current_document_id>{document_data.get("document_info", {}).get("document_id", {})}</current_document_id>
+                <document_metadata>
+                {relationship}
+                </document_metadata>
+                <article_content>
+                {article['content']}
+                </article_content>
+            """.strip()
+            try:
+                response = self.openai_client.chat.completions.create(
+                    model=settings.OPENAI_PARSE_MODEL,
+                    messages=[
+                        {"role": "system", "content": self.PARSING_RELATIONSHIP_PROMPT},
+                        {"role": "user", "content": content}
+                    ],
+                    temperature=0.5,
+                )
+                response_text = response.choices[0].message.content.replace('```json', '').replace('```', '')
+                response_text = re.sub(r'(<think>[\s\S]+?</think>)|(<thinking>[\s\S]+?</thinking>)', '', response_text).strip()
+                logger.debug(f"Response text for article {article['id']}: {response_text}")
+                response_json = json.loads(response_text)
+                article["Sửa đổi, bổ sung"] = response_json.get("Sửa đổi, bổ sung", [])
+                article["Thay thế"] = response_json.get("Thay thế", [])
+                article["Bãi bỏ"] = response_json.get("Bãi bỏ", [])
+                article["Đình chỉ việc thi hành"] = response_json.get("Đình chỉ việc thi hành", [])
+                article["Hướng dẫn, quy định"] = response_json.get("Hướng dẫn, quy định", [])
+                article["external"] = response_json.get("external", [])
+
+                return article
+
+            except Exception as e:
+                logger.error(f"Error chunking article {article['id']}: {e}")
+                return None
+            
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        tasks = []
+        with ThreadPoolExecutor(max_workers=settings.CONCURRENCY_LIMIT) as executor:
+            for article in articles:
+                tasks.append(executor.submit(chunk_article, article))
+
+        parsed_articles = []
+        for future in as_completed(tasks):
+            result = future.result()
+            if result:
+                parsed_articles.append(result)
+
+        return parsed_articles

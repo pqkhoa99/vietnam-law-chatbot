@@ -55,8 +55,11 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = "OPENAI_API_KEY"
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_MODEL: str = "gpt-3.5-turbo"
+    OPENAI_PARSE_MODEL: str = "deepseek-ai/DeepSeek-V3-0324"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
 
+    # Parse settings
+    CONCURRENCY_LIMIT: int = 5
 
 # Create global settings instance
 settings = Settings()

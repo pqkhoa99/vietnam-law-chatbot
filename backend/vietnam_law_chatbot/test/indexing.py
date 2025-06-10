@@ -5,6 +5,7 @@ import logging
 from loguru import logger
 from vietnam_law_chatbot.retrieval.indexing.crawler import VBPLCrawler
 from vietnam_law_chatbot.retrieval.indexing.chunking import VBPLChunker
+from vietnam_law_chatbot.core.config import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -13,6 +14,11 @@ logger.add("crawl_chunk_test.log", rotation="10 MB")
 # Sample document IDs to test
 SAMPLE_DOCUMENT_IDS = [
     "176421",  # Example document ID
+    # "167197",
+    # "176696",
+    # "177349",
+    # "169527",
+    # "178101",
     # Add more document IDs here for testing
 ]
 
@@ -42,7 +48,15 @@ def test_crawl_and_chunk_by_prefix(document_id):
     logger.info(f"Successfully crawled document: {document_data.get('document_info', {}).get('document_title', 'Unknown')}")
     
     # Initialize chunker
-    chunker = VBPLChunker()
+    from openai import OpenAI
+
+    client = OpenAI(
+        api_key=settings.OPENAI_API_KEY,
+        base_url=settings.OPENAI_BASE_URL,
+        max_retries=10,
+    )
+
+    chunker = VBPLChunker(openai_client=client)
     
     # Chunk the document by prefix
     chunked_data = chunker.chunking_by_prefix(document_data)
@@ -68,6 +82,15 @@ def test_crawl_and_chunk_by_prefix(document_id):
     logger.info(f"Statistics for document {document_id}:")
     logger.info(f"Total top-level sections: {total_sections}")
     logger.info(f"Total articles: {total_articles}")
+
+
+    # logger.info(chunker.chunking_articles(chunked_data))
+    articles_data = chunker.chunking_articles(chunked_data)
+    # Save the articles data to a file
+    articles_output_filename = os.path.join(CHUNKING_DIR, f"{document_id}_articles.json")
+    with open(articles_output_filename, "w", encoding="utf-8") as f:
+        json.dump(articles_data, f, ensure_ascii=False, indent=2)
+    logger.info(f"Articles data saved to {articles_output_filename}")
 
 def test_crawl_and_chunk_with_llm(document_id, openai_client=None):
     """
