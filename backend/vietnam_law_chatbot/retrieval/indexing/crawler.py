@@ -130,7 +130,7 @@ class VBPLCrawler:
 
         header_div = soup.find('div', class_='header')
         if header_div:
-            a_tag = header_div.find('a')
+            a_tag = header_div.find('a', class_='selected')
             if a_tag and 'href' in a_tag.attrs:
                 info["document_id"] = a_tag['href'].split('ItemID=')[-1].split('&')[0].strip()
         

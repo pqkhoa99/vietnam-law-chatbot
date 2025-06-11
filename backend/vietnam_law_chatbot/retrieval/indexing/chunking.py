@@ -287,11 +287,12 @@ class VBPLChunker:
                     articles.append(first_level)
 
         # Multithreaded chunking
-        def chunk_article(article):
+        def chunk_article(article, retries=3):
             """
             Helper function to chunk a single article using the OpenAI client.
             """
             relationship = document_data.get("document_info", {}).get("relationship", {})
+            relationship.pop("Văn bản HD, QĐ chi tiết", None)
             relationship = json.dumps(relationship, ensure_ascii=False, indent=2)
             relationship = re.sub(r'\([\s\S]+?\)', '', relationship)
             content = f"""
@@ -312,10 +313,10 @@ class VBPLChunker:
                     ],
                     temperature=0.5,
                 )
-                response_text = response.choices[0].message.content.replace('```json', '').replace('```', '')
-                response_text = re.sub(r'(<think>[\s\S]+?</think>)|(<thinking>[\s\S]+?</thinking>)', '', response_text).strip()
-                logger.debug(f"Response text for article {article['id']}: {response_text}")
+                json_regex = re.compile(r'\{[\s\S]+?\}')
+                response_text = json_regex.search(response.choices[0].message.content).group(0)
                 response_json = json.loads(response_text)
+                logger.debug(f"Parsed article {article['id']} with response: {response_json}")
                 article["Sửa đổi, bổ sung"] = response_json.get("Sửa đổi, bổ sung", [])
                 article["Thay thế"] = response_json.get("Thay thế", [])
                 article["Bãi bỏ"] = response_json.get("Bãi bỏ", [])
@@ -327,6 +328,11 @@ class VBPLChunker:
 
             except Exception as e:
                 logger.error(f"Error chunking article {article['id']}: {e}")
+                if retries > 0:
+                    logger.info(f"Retrying chunking article {article['id']}: {retries} retries left")
+                    return chunk_article(article, retries - 1)
+                else:
+                    logger.error(f"Failed to chunk article {article['id']} after retries")
                 return None
             
         from concurrent.futures import ThreadPoolExecutor, as_completed
