@@ -71,13 +71,14 @@ class VBPLChunker:
                 title_match = title_regex.search(chuong[2])
                 if title_match:
                     chuong_data["title"] = re.sub(r'\s+', ' ', re.sub(r'[#*_\[\]\(\)-]', '', title_match.group(0))).strip()
-                    chuong_content = chuong[2].replace(chuong_data["title"], "").strip()
+                    chuong_content = chuong[2].replace(chuong_data["title"], "", 1).strip()
                 else:
                     chuong_data["title"] = ""
                     chuong_content = chuong[2].strip()
 
+                first_type = chuong_content.strip().split()[0] if chuong_content.strip() else ""
                 muc_matches = muc_regex.findall(chuong_content)
-                if muc_matches:
+                if muc_matches and (first_type == "Mục"):
                     for muc in muc_matches:
                         muc_data = {
                             "type": VBPLSection.SECTION.name,
@@ -89,7 +90,7 @@ class VBPLChunker:
                         title_match = title_regex.search(muc[1])
                         if title_match:
                             muc_data["title"] = re.sub(r'\s+', ' ', re.sub(r'[#*_\[\]\(\)-]', '', title_match.group(0))).strip()
-                            muc_content = muc[1].replace(muc_data["title"], "").strip()
+                            muc_content = muc[1].replace(muc_data["title"], "", 1).strip()
                         else:
                             muc_data["title"] = ""
                             muc_content = muc[1].strip()
@@ -130,7 +131,7 @@ class VBPLChunker:
                     title_match = title_regex.search(muc[1])
                     if title_match:
                         muc_data["title"] = re.sub(r'\s+', ' ', re.sub(r'[#*_\[\]\(\)-]', '', title_match.group(0))).strip()
-                        muc_content = muc[1].replace(muc_data["title"], "").strip()
+                        muc_content = muc[1].replace(muc_data["title"], "", 1).strip()
                     else:
                         muc_data["title"] = ""
                         muc_content = muc[1].strip()
