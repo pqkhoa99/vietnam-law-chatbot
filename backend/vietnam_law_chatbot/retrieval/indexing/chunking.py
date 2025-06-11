@@ -313,7 +313,7 @@ class VBPLChunker:
                     ],
                     temperature=0.5,
                 )
-                json_regex = re.compile(r'\{[\s\S]+?\}')
+                json_regex = re.compile(r'\{[\s\S]+\}')
                 response_text = json_regex.search(response.choices[0].message.content).group(0)
                 response_json = json.loads(response_text)
                 logger.debug(f"Parsed article {article['id']} with response: {response_json}")
@@ -323,17 +323,39 @@ class VBPLChunker:
                 article["Đình chỉ việc thi hành"] = response_json.get("Đình chỉ việc thi hành", [])
                 article["Hướng dẫn, quy định"] = response_json.get("Hướng dẫn, quy định", [])
                 article["external"] = response_json.get("external", [])
+                if article["external"]:
+                    external = []
+                    for ext in response_json["external"]:
+                        if isinstance(ext, dict):
+                            for key, value in ext.items():
+                                if key != article["id"]:
+                                    external.append({key: value})
+                                else:
+                                    logger.warning(f"Article {article['id']} has external reference to itself, overwriting.")
+                                    article["Sửa đổi, bổ sung"] = value.get("Sửa đổi, bổ sung", [])
+                                    article["Thay thế"] = value.get("Thay thế", [])
+                                    article["Bãi bỏ"] = value.get("Bãi bỏ", [])
+                                    article["Đình chỉ việc thi hành"] = value.get("Đình chỉ việc thi hành", [])
+                                    article["Hướng dẫn, quy định"] = value.get("Hướng dẫn, quy định", [])
+
+                    article["external"] = external
 
                 return article
 
             except Exception as e:
-                logger.error(f"Error chunking article {article['id']}: {e}")
+                logger.error(f"Error chunking article {article['id']}: {e} | Response: {response.choices[0].message.content}")
                 if retries > 0:
                     logger.info(f"Retrying chunking article {article['id']}: {retries} retries left")
                     return chunk_article(article, retries - 1)
                 else:
                     logger.error(f"Failed to chunk article {article['id']} after retries")
-                return None
+                article["Sửa đổi, bổ sung"] = []
+                article["Thay thế"] = []
+                article["Bãi bỏ"] = []
+                article["Đình chỉ việc thi hành"] = []
+                article["Hướng dẫn, quy định"] = []
+                article["external"] = []
+                return article
             
         from concurrent.futures import ThreadPoolExecutor, as_completed
         

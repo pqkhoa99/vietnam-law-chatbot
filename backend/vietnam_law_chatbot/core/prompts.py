@@ -223,19 +223,19 @@ PARSING_RELATIONSHIP_PROMPT = """<instructions>
 You are a specialized legal document relationship analyzer for Vietnamese legislative texts. Your task is to identify how a legal document affects other documents and how articles within the document affect external documents.
 
 <important_notes>
-1. For document relationships, track two types of relationships:
-   - External documents affected by the ENTIRE current document 
-   - External documents affected by SPECIFIC ARTICLES within the current document
+1. For document relationships, track only relationships where specific ĐIỀU (articles) are affected:
+   - External articles affected by the ENTIRE current document 
+   - External articles affected by SPECIFIC ARTICLES within the current document
 
 2. For article-level tracking:
    - ONLY track modifications to ĐIỀU (articles), not PHỤ LỤC (appendices), CHƯƠNG (chapters), MỤC (sections), MẪU (forms)
    - When a KHOẢN (clause) within a ĐIỀU is modified, use the ID of the ĐIỀU
    - For article IDs, use ONLY the numeric part (e.g., "Điều 7a" becomes document_id_7)
 
-3. Special formats:
-   - When an entire document is canceled or referenced without specific articles, use just the document_id (e.g., "REL004")
-   - Current document affecting external document: Include in "external" section
-   - Track which article in current document affects which external document
+3. Special rule for article references:
+   - ONLY include relationships where specific articles are explicitly referenced
+   - DO NOT include document-level references without specific articles mentioned
+   - When text refers to an entire document without specifying articles, DO NOT include it
    
 4. Self-references:
    - When text refers to "Nghị định này", it's referencing the current document itself
@@ -267,12 +267,12 @@ The following relationship types should be identified and tracked:
 
 <extraction_rules>
 1. For regular document relationships:
-   - Track how the current document affects external documents at the article level
-   - When articles are explicitly mentioned, use document_id_article format
-   - When entire documents are affected without specific articles mentioned, use just the document_id (e.g., "REL004")
+   - ONLY track relationships with explicit article references
+   - Always use document_id_article format (e.g., "REL001_5")
+   - DO NOT include document-level references without specific articles
 
 2. For article-based relationships:
-   - Track which articles in current document affect specific external documents
+   - Track which articles in current document affect specific external articles
    - Format: "{current_document_id}_{article_number}" as the key
    - Include relationship information for that specific article
    - IMPORTANT: Only include entries in the "external" section when an article in the current document affects articles in EXTERNAL documents
@@ -296,9 +296,10 @@ The following relationship types should be identified and tracked:
    - Self-references like this should be included in the main relationship arrays if they're being referenced as guidance
    - NEVER include self-references in the "external" section arrays
 
-6. For document cancellations or general references:
-   - When an entire document is being canceled/declared invalid or referenced in general, use just the document_id
-   - When general reference is made to a document without specifying particular articles (e.g., "theo quy định của Nghị định số 78/2020/ND-BNV"), use just the document_id (e.g., "REL004")
+6. CRITICAL: General document references:
+   - When an entire document is being canceled/declared invalid or referenced in general WITHOUT specific articles, DO NOT include it in any arrays
+   - When general reference is made to a document without specifying particular articles (e.g., "theo quy định của Nghị định số 78/2020/ND-BNV"), DO NOT include it
+   - ONLY include references to specific articles
 </extraction_rules>
 
 <expected_output>
@@ -307,19 +308,19 @@ Provide your output as a JSON object with two main sections:
 2. Article-specific relationships in "external" section
 
 {
-  "Sửa đổi, bổ sung": ["document_id_article", "document_id", ...],
-  "Thay thế": ["document_id_article", "document_id", ...],
-  "Bãi bỏ": ["document_id_article", "document_id", ...],
-  "Đình chỉ việc thi hành": ["document_id_article", "document_id", ...],
-  "Hướng dẫn, quy định": ["document_id_article", "document_id", ...],
+  "Sửa đổi, bổ sung": ["document_id_article", ...],
+  "Thay thế": ["document_id_article", ...],
+  "Bãi bỏ": ["document_id_article", ...],
+  "Đình chỉ việc thi hành": ["document_id_article", ...],
+  "Hướng dẫn, quy định": ["document_id_article", ...],
   "external": [
     {
       "current_document_id_article": {
-        "Sửa đổi, bổ sung": ["external_document_id_article", "external_document_id", ...],
-        "Thay thế": ["external_document_id_article", "external_document_id", ...],
-        "Bãi bỏ": ["external_document_id_article", "external_document_id", ...],
-        "Đình chỉ việc thi hành": ["external_document_id_article", "external_document_id", ...],
-        "Hướng dẫn, quy định": ["external_document_id_article", "external_document_id", ...]
+        "Sửa đổi, bổ sung": ["external_document_id_article", ...],
+        "Thay thế": ["external_document_id_article", ...],
+        "Bãi bỏ": ["external_document_id_article", ...],
+        "Đình chỉ việc thi hành": ["external_document_id_article", ...],
+        "Hướng dẫn, quy định": ["external_document_id_article", ...]
       }
     },
     ...
@@ -329,9 +330,10 @@ Provide your output as a JSON object with two main sections:
 If a relationship type has no entries, include it with an empty array.
 
 CRITICAL RULES FOR OUTPUT:
-1. The "external" section must ONLY contain relationships where the current document's articles affect EXTERNAL documents
+1. The "external" section must ONLY contain relationships where the current document's articles affect EXTERNAL articles
 2. NEVER include the current document's own articles (starting with <current_document_id>) in any arrays inside the "external" section
 3. If an article from the current document references another article from the same document, do NOT include it in the "external" section
+4. ONLY include references to specific articles, NEVER include document-level references without article numbers
 </expected_output>
 
 <examples>
@@ -353,7 +355,7 @@ CRITICAL RULES FOR OUTPUT:
 {
   "Sửa đổi, bổ sung": [],
   "Thay thế": [],
-  "Bãi bỏ": ["REL001"],
+  "Bãi bỏ": [],
   "Đình chỉ việc thi hành": [],
   "Hướng dẫn, quy định": [],
   "external": []
@@ -570,7 +572,7 @@ Thay thế các khoản 1, 2, 3, 4 và 5 Điều 7 của Nghị định số 78/
 {
   "Sửa đổi, bổ sung": ["REL004_7"],
   "Thay thế": ["REL004_7"],
-  "Bãi bỏ": ["REL001", "REL005", "REL006", "REL004_8"],
+  "Bãi bỏ": ["REL004_8"],
   "Đình chỉ việc thi hành": [],
   "Hướng dẫn, quy định": [],
   "external": [
@@ -727,7 +729,7 @@ b) Bản chụp ý kiến góp ý của các bộ, cơ quan ngang bộ, cơ quan
   "Thay thế": [],
   "Bãi bỏ": [],
   "Đình chỉ việc thi hành": [],
-  "Hướng dẫn, quy định": ["REL004", "CUR999_25", "CUR999_27"],
+  "Hướng dẫn, quy định": ["CUR999_25", "CUR999_27"],
   "external": []
 }
 </expected_response>
@@ -738,7 +740,9 @@ Analyze the provided document content thoroughly, identify all relationships bet
 
 FINAL VERIFICATION BEFORE SUBMITTING:
 1. Check that no article ID beginning with the <current_document_id> appears in any arrays inside the "external" section
-2. The "external" section should only contain entries where current document articles affect EXTERNAL documents
+2. The "external" section should only contain entries where current document articles affect EXTERNAL articles
 3. Self-references should only appear in the main relationship arrays if appropriate, never in the "external" section
+4. ONLY include relationships where specific articles are referenced (with article numbers)
+5. DO NOT include document-level references without specific article numbers mentioned
 </instructions>
 """
