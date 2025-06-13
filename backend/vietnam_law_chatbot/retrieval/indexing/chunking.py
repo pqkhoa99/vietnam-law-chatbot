@@ -151,6 +151,29 @@ class VBPLChunker:
 
         return id_text
     
+    def title_parser(self, title: str) -> str:
+        """
+        Parses the title of a document to remove unwanted characters and normalize it.
+
+        Args:
+            title (str): The title to parse.
+
+        Returns:
+            str: A cleaned and normalized title.
+        """
+        lines = title.splitlines()
+        title = ""
+        for i, line in enumerate(lines):
+            if not re.match(r'^\s*(Mục|Điều)\s*[0-9]+', line.strip()):
+                title += line
+            else:
+                lines = lines[i:]
+                break
+
+        title = re.sub(r'\s+', ' ', title).strip()
+        return re.sub(r'[#*_\[\]\(\)-]', '', title).strip(), '\n'.join(lines).strip()
+
+    
     def chunking_by_prefix(self, document_data: dict) -> dict:
         """
         Chunks the document content based on prefixes like Chương, Mục, Điều.
@@ -165,15 +188,14 @@ class VBPLChunker:
             return {}
             
         content = unicodedata.normalize('NFC', document_data.get("text_content", ""))
+        content = ftfy.fix_text(content)
         if not content:
             return {}
 
         # Clean up the content
         data = []
-        title_regex = re.compile(r'([\s\S]+?)(?=(\n+\s*Điều\s*[0-9]+)|(\n+\s*Mục\s*[0-9]+))', re.IGNORECASE)
         chuong_regex = re.compile(r'\n*\s*(Chương\s*([MDCLXVI]+))\s*([\s\S]*?)(?=(\n+\s*Chương\s*([MDCLXVI]+))|\Z)')
         muc_regex = re.compile(r'\n*\s*(Mục\s*[0-9]+)([\s\S]+?)(?=(\n+\s*Mục\s*[0-9]+)|(\n+\s*Chương\s*([MDCLXVI]+))|\Z)')
-        dieu_regex = re.compile(r'\n*\s*(Điều\s*[0-9]*\\*\.+[\s\S]+?)(?=\n+\s*Điều\s*[0-9]+\\*\.|\Z)')
 
         chuong_matches = chuong_regex.findall(content)
 
@@ -185,45 +207,29 @@ class VBPLChunker:
     
         if chuong_matches and (first_type == "Chương"):
             for chuong in chuong_matches:
+                title, chuong_content = self.title_parser(chuong[2].strip())
                 chuong_data = {
                     "type": VBPLSection.CHAPTER.name,
                     "id": self.convert_to_id(chuong[0].strip()),
                     "id_text": chuong[0].strip(),
-                    "title": "",
+                    "title": title,
+                    "content": chuong_content,
                     "children": []
                 }
                 
-                title_match = title_regex.search(chuong[2])
-                if title_match:
-                    chuong_data["title"] = re.sub(r'\s+', ' ', re.sub(r'[#*_\[\]\(\)-]', '', title_match.group(0))).strip()
-                    chuong_content = chuong[2].replace(chuong_data["title"], "", 1).strip()
-                else:
-                    chuong_data["title"] = ""
-                    chuong_content = chuong[2].strip()
-
-                chuong_data["content"] = chuong_content
-
                 first_type = chuong_content.strip().split()[0] if chuong_content.strip() else ""
                 muc_matches = muc_regex.findall(chuong_content)
                 if muc_matches and (first_type == "Mục"):
                     for muc in muc_matches:
+                        title, muc_content = self.title_parser(muc[1].strip())
                         muc_data = {
                             "type": VBPLSection.SECTION.name,
                             "id": f"{self.convert_to_id(muc[0].strip())}_{chuong_data['id']}",
                             "id_text": muc[0].strip(),
-                            "title": "",
+                            "title": title,
+                            "content": muc_content,
                             "children": []
                         }
-                        
-                        title_match = title_regex.search(muc[1])
-                        if title_match:
-                            muc_data["title"] = re.sub(r'\s+', ' ', re.sub(r'[#*_\[\]\(\)-]', '', title_match.group(0))).strip()
-                            muc_content = muc[1].replace(muc_data["title"], "", 1).strip()
-                        else:
-                            muc_data["title"] = ""
-                            muc_content = muc[1].strip()
-
-                        muc_data["content"] = muc_content
 
                         dieu_matches = self.parse_helper(muc_content, VBPLSection.ARTICLE)
 
@@ -232,6 +238,7 @@ class VBPLChunker:
                             dieu_data = {
                                 "id": dieu_id,
                                 "id_text": dieu.strip().split('.', 1)[0],
+                                "title": re.search(r'^\s*Điều\s*[0-9]+\.\s*(.+)', dieu).group(1),
                                 "type": VBPLSection.ARTICLE.name,
                                 "content": dieu.replace('*', '').strip(),
                                 "children": [
@@ -256,6 +263,7 @@ class VBPLChunker:
                             dieu_data = {
                                 "id": dieu_id,
                                 "id_text": dieu.strip().split('.', 1)[0],
+                                "title": re.search(r'^\s*Điều\s*[0-9]+\.\s*(.+)', dieu).group(1),
                                 "type": VBPLSection.ARTICLE.name,
                                 "content": dieu.replace('*', '').strip(),
                                 "children": [
@@ -273,24 +281,16 @@ class VBPLChunker:
             muc_matches = muc_regex.findall(content)
             if muc_matches and (first_type == "Mục"):
                 for muc in muc_matches:
+                    title, muc_content = self.title_parser(muc[1].strip())
                     muc_data = {
                         "type": VBPLSection.SECTION.name,
                         "id": self.convert_to_id(muc[0].strip()),
                         "id_text": muc[0].strip(),
-                        "title": "",
+                        "title": title,
+                        "content": muc_content,
                         "children": []
                     }
                     
-                    title_match = title_regex.search(muc[1])
-                    if title_match:
-                        muc_data["title"] = re.sub(r'\s+', ' ', re.sub(r'[#*_\[\]\(\)-]', '', title_match.group(0))).strip()
-                        muc_content = muc[1].replace(muc_data["title"], "", 1).strip()
-                    else:
-                        muc_data["title"] = ""
-                        muc_content = muc[1].strip()
-
-                    muc_data["content"] = muc_content
-
                     dieu_matches = self.parse_helper(muc_content, VBPLSection.ARTICLE)
 
                     for dieu in dieu_matches:
@@ -298,6 +298,7 @@ class VBPLChunker:
                         dieu_data = {
                             "id": dieu_id,
                             "id_text": dieu.strip().split('.', 1)[0],
+                            "title": re.search(r'^\s*Điều\s*[0-9]+\.\s*(.+)', dieu).group(1),
                             "type": VBPLSection.ARTICLE.name,
                             "content": dieu.replace('*', '').strip(),
                             "children": [
@@ -321,6 +322,7 @@ class VBPLChunker:
                         dieu_data = {
                             "id": dieu_id,
                             "id_text": dieu.strip().split('.', 1)[0],
+                            "title": re.search(r'^\s*Điều\s*[0-9]+\.\s*(.+)', dieu).group(1),
                             "type": VBPLSection.ARTICLE.name,
                             "content": dieu.replace('*', '').strip(),
                             "children": [
