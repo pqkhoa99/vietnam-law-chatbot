@@ -1,5 +1,6 @@
 import re
 import json
+import unicodedata
 from enum import Enum
 from loguru import logger
 from vietnam_law_chatbot.core.config import settings
@@ -27,6 +28,129 @@ class VBPLChunker:
         self.CHUNKING_SYSTEM_PROMPT = CHUNKING_SYSTEM_PROMPT
         self.PARSING_RELATIONSHIP_PROMPT = PARSING_RELATIONSHIP_PROMPT
 
+    def parse_helper(self, content, section_name: VBPLSection):
+            """
+            Helper function to process content with a regex pattern.
+            Args:
+                content (str): The content to process.
+                section_name (VBPLSection): The section name to match against.
+            Returns:
+                list: A list of matches found in the content.
+            """
+            lines = content.splitlines()
+            parsed_data = []
+            current_number = 0
+            chunk = ""
+            inquote = 0
+            if section_name == VBPLSection.ARTICLE:
+                for line in lines:
+                    if current_number == 0 and re.match(rf"^\s*{VBPLSection.ARTICLE.value}\s*[0-9]+\s*\.", line.strip()):
+                        chunk = line
+                        current_number = int(re.search(r'\d+', line).group(0))
+                        continue
+                    if re.match(rf"^\s*{VBPLSection.ARTICLE.value}\s*{current_number + 1}\s*\.", line.strip()):
+                        # if chunk and chunk.startswith(VBPLSection.ARTICLE.value):
+                        if chunk and re.match(rf"^\s*{VBPLSection.ARTICLE.value}\s*{current_number}\s*\.", chunk.strip()):
+                            parsed_data.append(chunk)
+                        chunk = line
+                        current_number += 1
+                    else:
+                        chunk += "\n" + line if chunk else line
+                if chunk:
+                    parsed_data.append(chunk)
+            elif section_name == VBPLSection.CLAUSE:
+                for line in lines:
+                    # Replace smart quotes with regular quotes
+                    line = line.replace('“', '"')
+                    line = line.replace('”', '"')
+                    line = line.replace('‘', '"')
+                    line = line.replace('’', '"')
+                    
+                    # Count quotes to determine if we are in a quote
+                    inquote += line.count('"')
+                    if inquote % 2 == 0:
+                        inquote = 0
+                        
+                    if current_number == 0 and re.match(rf"^\s*[0-9]+\s*\.", line.strip()):
+                        chunk = line
+                        current_number = int(re.search(r'\d+', line).group(0))
+                        continue
+                    if re.match(rf"^\s*{current_number + 1}\s*\.", line.strip()) and inquote == 0:
+                        if chunk and re.match(rf"^\s*{current_number}\s*\.", chunk.strip()):
+                            parsed_data.append(chunk)
+                        chunk = line
+                        current_number += 1
+                    else:
+                        chunk += "\n" + line if chunk else line
+
+                if chunk:
+                    if parsed_data:
+                        parsed_data.append(chunk)
+                    else:
+                        current_number = 1
+                        for line in lines:
+                            if not re.match(rf"^\s*{VBPLSection.ARTICLE.value}\s*[0-9]+\s*\.", line.strip()) and line.strip():
+                                parsed_data.append(f"{current_number}. {line.strip()}")
+                                current_number += 1
+            else:
+                logger.error(f"Unsupported section name: {section_name}")
+            return parsed_data
+
+    def convert_to_id(self, text: str) -> str:
+        """
+        Converts a text to a valid ID by removing special characters and replacing spaces with underscores.
+
+        Args:
+            text (str): The text to convert.
+
+        Returns:
+            str: A valid ID string.
+        """
+        if not text:
+            return ""
+        # Normalize the text
+        normalized_text = unicodedata.normalize('NFC', text)
+        # Convert to lowercase
+        normalized_text = normalized_text.lower()
+        # Make it to English, remove accents
+        vietnamese_map = {
+            'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
+            'ă': 'a', 'ắ': 'a', 'ằ': 'a', 'ẳ': 'a', 'ẵ': 'a', 'ặ': 'a',
+            'â': 'a', 'ấ': 'a', 'ầ': 'a', 'ẩ': 'a', 'ẫ': 'a', 'ậ': 'a',
+            'đ': 'd',
+            'è': 'e', 'é': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
+            'ê': 'e', 'ế': 'e', 'ề': 'e', 'ể': 'e', 'ễ': 'e', 'ệ': 'e',
+            'ì': 'i', 'í': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
+            'ò': 'o', 'ó': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
+            'ô': 'o', 'ố': 'o', 'ồ': 'o', 'ổ': 'o', 'ỗ': 'o', 'ộ': 'o',
+            'ơ': 'o', 'ớ': 'o', 'ờ': 'o', 'ở': 'o', 'ỡ': 'o', 'ợ': 'o',
+            'ù': 'u', 'ú': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
+            'ư': 'u', 'ứ': 'u', 'ừ': 'u', 'ử': 'u', 'ữ': 'u', 'ự': 'u',
+            'ỳ': 'y', 'ý': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y'
+        }
+        normalized_text = ''.join(vietnamese_map.get(char, char) for char in normalized_text)
+        # Remove special characters except underscores and alphanumeric characters
+        normalized_text = re.sub(r'[^\w\s]', '', normalized_text)
+        # Remove multiple spaces
+        normalized_text = re.sub(r'\s+', ' ', normalized_text).strip()
+        
+        if ' ' not in normalized_text and not normalized_text.isdigit():
+            prefixes = ["Chương", "Mục", "Điều"]
+            for p in prefixes:
+                if normalized_text.startswith(p):
+                    normalized_text = normalized_text.replace(p, "").strip()
+                    break
+            id_text = f"{p}-{normalized_text}"
+        elif normalized_text.isdigit():
+            id_text = f"khoan-{normalized_text}"
+        else:
+            # Replace spaces with underscores
+            id_text = normalized_text.replace(' ', '-')
+            # Remove any leading or trailing underscores
+            id_text = id_text.strip('-')
+
+        return id_text
+    
     def chunking_by_prefix(self, document_data: dict) -> dict:
         """
         Chunks the document content based on prefixes like Chương, Mục, Điều.
@@ -40,7 +164,7 @@ class VBPLChunker:
         if not document_data:
             return {}
             
-        content = document_data.get("text_content", "")
+        content = unicodedata.normalize('NFC', document_data.get("text_content", ""))
         if not content:
             return {}
 
@@ -63,6 +187,7 @@ class VBPLChunker:
             for chuong in chuong_matches:
                 chuong_data = {
                     "type": VBPLSection.CHAPTER.name,
+                    "id": self.convert_to_id(chuong[0].strip()),
                     "id_text": chuong[0].strip(),
                     "title": "",
                     "children": []
@@ -76,12 +201,15 @@ class VBPLChunker:
                     chuong_data["title"] = ""
                     chuong_content = chuong[2].strip()
 
+                chuong_data["content"] = chuong_content
+
                 first_type = chuong_content.strip().split()[0] if chuong_content.strip() else ""
                 muc_matches = muc_regex.findall(chuong_content)
                 if muc_matches and (first_type == "Mục"):
                     for muc in muc_matches:
                         muc_data = {
                             "type": VBPLSection.SECTION.name,
+                            "id": f"{self.convert_to_id(muc[0].strip())}_{chuong_data['id']}",
                             "id_text": muc[0].strip(),
                             "title": "",
                             "children": []
@@ -95,12 +223,25 @@ class VBPLChunker:
                             muc_data["title"] = ""
                             muc_content = muc[1].strip()
 
-                        dieu_matches = dieu_regex.findall(muc_content)
+                        muc_data["content"] = muc_content
+
+                        dieu_matches = self.parse_helper(muc_content, VBPLSection.ARTICLE)
 
                         for dieu in dieu_matches:
+                            dieu_id = f"{self.convert_to_id(dieu.strip().split('.', 1)[0].strip())}_{muc_data['id']}"
                             dieu_data = {
+                                "id": dieu_id,
+                                "id_text": dieu.strip().split('.', 1)[0],
                                 "type": VBPLSection.ARTICLE.name,
                                 "content": dieu.replace('*', '').strip(),
+                                "children": [
+                                    {
+                                        "id": f"{self.convert_to_id(clause.split('.', 1)[0])}_{dieu_id}",
+                                        "id_text": clause.strip().split()[0].replace('.', ''),
+                                        "type": VBPLSection.CLAUSE.name,
+                                        "content": clause.strip()
+                                    } for clause in self.parse_helper(dieu, VBPLSection.CLAUSE)
+                                ]
                             }
                             muc_data["children"].append(dieu_data)
 
@@ -108,12 +249,23 @@ class VBPLChunker:
                         
                     data.append(chuong_data)
                 else:
-                    dieu_matches = dieu_regex.findall(chuong_content)
+                    dieu_matches = self.parse_helper(chuong_content, VBPLSection.ARTICLE)
                     if dieu_matches:
                         for dieu in dieu_matches:
+                            dieu_id = f"{self.convert_to_id(dieu.strip().split('.', 1)[0].strip())}_{chuong_data['id']}"
                             dieu_data = {
+                                "id": dieu_id,
+                                "id_text": dieu.strip().split('.', 1)[0],
                                 "type": VBPLSection.ARTICLE.name,
                                 "content": dieu.replace('*', '').strip(),
+                                "children": [
+                                    {
+                                        "id": f"{self.convert_to_id(clause.split('.', 1)[0])}_{dieu_id}",
+                                        "id_text": clause.strip().split()[0].replace('.', ''),
+                                        "type": VBPLSection.CLAUSE.name,
+                                        "content": clause.strip()
+                                    } for clause in self.parse_helper(dieu, VBPLSection.CLAUSE)
+                                ]
                             }
                             chuong_data["children"].append(dieu_data)
                     data.append(chuong_data)
@@ -123,6 +275,7 @@ class VBPLChunker:
                 for muc in muc_matches:
                     muc_data = {
                         "type": VBPLSection.SECTION.name,
+                        "id": self.convert_to_id(muc[0].strip()),
                         "id_text": muc[0].strip(),
                         "title": "",
                         "children": []
@@ -136,24 +289,48 @@ class VBPLChunker:
                         muc_data["title"] = ""
                         muc_content = muc[1].strip()
 
-                    dieu_matches = dieu_regex.findall(muc_content)
+                    muc_data["content"] = muc_content
+
+                    dieu_matches = self.parse_helper(muc_content, VBPLSection.ARTICLE)
 
                     for dieu in dieu_matches:
+                        dieu_id = f"{self.convert_to_id(dieu.strip().split('.', 1)[0].strip())}_{muc_data['id']}"
                         dieu_data = {
+                            "id": dieu_id,
+                            "id_text": dieu.strip().split('.', 1)[0],
                             "type": VBPLSection.ARTICLE.name,
                             "content": dieu.replace('*', '').strip(),
+                            "children": [
+                                {
+                                    "id": f"{self.convert_to_id(clause.split('.', 1)[0])}_{dieu_id}",
+                                    "id_text": clause.strip().split()[0].replace('.', ''),
+                                    "type": VBPLSection.CLAUSE.name,
+                                    "content": clause.strip()
+                                } for clause in self.parse_helper(dieu, VBPLSection.CLAUSE)
+                            ]
                         }
                         muc_data["children"].append(dieu_data)
 
                     data.append(muc_data)
             else:
-                # Check dieu
-                dieu_matches = dieu_regex.findall(content)
+                dieu_matches = self.parse_helper(content, VBPLSection.ARTICLE)
+
                 if dieu_matches:
                     for dieu in dieu_matches:
+                        dieu_id = f"{self.convert_to_id(dieu.strip().split('.', 1)[0].strip())}"
                         dieu_data = {
+                            "id": dieu_id,
+                            "id_text": dieu.strip().split('.', 1)[0],
                             "type": VBPLSection.ARTICLE.name,
                             "content": dieu.replace('*', '').strip(),
+                            "children": [
+                                {
+                                    "id": f"{self.convert_to_id(clause.split('.', 1)[0])}_{dieu_id}",
+                                    "id_text": clause.strip().split()[0].replace('.', ''),
+                                    "type": VBPLSection.CLAUSE.name,
+                                    "content": clause.strip()
+                                } for clause in self.parse_helper(dieu, VBPLSection.CLAUSE)
+                            ]
                         }
                         data.append(dieu_data)
 
@@ -196,7 +373,6 @@ class VBPLChunker:
                 {"role": "system", "content": self.CHUNKING_SYSTEM_PROMPT},
                 {"role": "user", "content": modified_content}
             ],
-            temperature=0.8,
         )
         response_text = response.choices[0].message.content.replace('```json', '').replace('```', '').strip()
 
@@ -313,9 +489,11 @@ class VBPLChunker:
                     ],
                     temperature=0.5,
                 )
-                json_regex = re.compile(r'\{[\s\S]+\}')
-                response_text = json_regex.search(response.choices[0].message.content).group(0)
+                removed_thinking = re.sub(r'(<think>[\s\S]*</think>)|(<thinking>[\s\S]*</thinking>)', '', response.choices[0].message.content)
+                json_regex = re.compile(r'\{[\s\S]*\}')
+                response_text = json_regex.search(removed_thinking).group(0)
                 response_json = json.loads(response_text)
+                logger.debug(f"Chunked article {article['id']} with raw response: {response.choices[0].message.content}")
                 logger.debug(f"Parsed article {article['id']} with response: {response_json}")
                 article["Sửa đổi, bổ sung"] = response_json.get("Sửa đổi, bổ sung", [])
                 article["Thay thế"] = response_json.get("Thay thế", [])
