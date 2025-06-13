@@ -188,7 +188,6 @@ class VBPLChunker:
             return {}
             
         content = unicodedata.normalize('NFC', document_data.get("text_content", ""))
-        content = ftfy.fix_text(content)
         if not content:
             return {}
 
