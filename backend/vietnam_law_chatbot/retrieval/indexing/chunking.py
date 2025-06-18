@@ -87,11 +87,12 @@ class VBPLChunker:
                     if parsed_data:
                         parsed_data.append(chunk)
                     else:
-                        current_number = 1
-                        for line in lines:
-                            if not re.match(rf"^\s*{VBPLSection.ARTICLE.value}\s*[0-9]+\s*\.", line.strip()) and line.strip():
-                                parsed_data.append(f"{current_number}. {line.strip()}")
-                                current_number += 1
+                        # current_number = 1
+                        # for line in lines:
+                        #     if not re.match(rf"^\s*{VBPLSection.ARTICLE.value}\s*[0-9]+\s*\.", line.strip()) and line.strip():
+                        #         parsed_data.append(f"{current_number}. {line.strip()}")
+                        #         current_number += 1
+                        pass
             else:
                 logger.error(f"Unsupported section name: {section_name}")
             return parsed_data
@@ -193,18 +194,19 @@ class VBPLChunker:
 
         # Clean up the content
         data = []
-        chuong_regex = re.compile(r'\n*\s*(Chương\s*([MDCLXVI]+))\s*([\s\S]*?)(?=(\n+\s*Chương\s*([MDCLXVI]+))|\Z)')
-        muc_regex = re.compile(r'\n*\s*(Mục\s*[0-9]+)([\s\S]+?)(?=(\n+\s*Mục\s*[0-9]+)|(\n+\s*Chương\s*([MDCLXVI]+))|\Z)')
+        chuong_regex = re.compile(r'(?:^|\n+)\s*(Chương\s*([MDCLXVI]+))\s*([\s\S]*?)(?=(?:^|\n+)\s*Chương\s*([MDCLXVI]+)|\Z)')
+        muc_regex = re.compile(r'(?:^|\n+)\s*(Mục\s*[0-9]+)([\s\S]+?)(?=(?:^|\n+)\s*Mục\s*[0-9]+|(?:^|\n+)\s*Chương\s*([MDCLXVI]+)|\Z)')
+        dieu_regex = re.compile(r'(?:^|\n+)\s*(Điều\s*[0-9]*\\*\.+[\s\S]+?)(?=(?:^|\n+)\s*Điều\s*[0-9]+\\*\.|\Z)')
 
         chuong_matches = chuong_regex.findall(content)
 
-        first_type = ""
-        for lines in content.splitlines():
-            if lines.strip().startswith("Chương") or lines.strip().startswith("Mục") or lines.strip().startswith("Điều"):
-                first_type = lines.strip().split()[0]
-                break
+        # first_type = ""
+        # for lines in content.splitlines():
+        #     if lines.strip().startswith("Chương") or lines.strip().startswith("Mục") or lines.strip().startswith("Điều"):
+        #         first_type = lines.strip().split()[0]
+        #         break
     
-        if chuong_matches and (first_type == "Chương"):
+        if chuong_matches:
             for chuong in chuong_matches:
                 title, chuong_content = self.title_parser(chuong[2].strip())
                 chuong_data = {
@@ -216,9 +218,9 @@ class VBPLChunker:
                     "children": []
                 }
                 
-                first_type = chuong_content.strip().split()[0] if chuong_content.strip() else ""
+                # first_type = chuong_content.strip().split()[0] if chuong_content.strip() else ""
                 muc_matches = muc_regex.findall(chuong_content)
-                if muc_matches and (first_type == "Mục"):
+                if muc_matches:
                     for muc in muc_matches:
                         title, muc_content = self.title_parser(muc[1].strip())
                         muc_data = {
@@ -237,7 +239,7 @@ class VBPLChunker:
                             dieu_data = {
                                 "id": dieu_id,
                                 "id_text": dieu.strip().split('.', 1)[0],
-                                "title": re.search(r'^\s*Điều\s*[0-9]+\.\s*(.+)', dieu).group(1),
+                                "title": re.search(r'^\s*Điều\s*[0-9]+\s*\.(.*)', dieu).group(1),
                                 "type": VBPLSection.ARTICLE.name,
                                 "content": dieu.replace('*', '').strip(),
                                 "children": [
@@ -262,7 +264,7 @@ class VBPLChunker:
                             dieu_data = {
                                 "id": dieu_id,
                                 "id_text": dieu.strip().split('.', 1)[0],
-                                "title": re.search(r'^\s*Điều\s*[0-9]+\.\s*(.+)', dieu).group(1),
+                                "title": re.search(r'^\s*Điều\s*[0-9]+\s*\.(.*)', dieu).group(1),
                                 "type": VBPLSection.ARTICLE.name,
                                 "content": dieu.replace('*', '').strip(),
                                 "children": [
@@ -278,7 +280,7 @@ class VBPLChunker:
                     data.append(chuong_data)
         else:
             muc_matches = muc_regex.findall(content)
-            if muc_matches and (first_type == "Mục"):
+            if muc_matches:
                 for muc in muc_matches:
                     title, muc_content = self.title_parser(muc[1].strip())
                     muc_data = {
@@ -297,7 +299,7 @@ class VBPLChunker:
                         dieu_data = {
                             "id": dieu_id,
                             "id_text": dieu.strip().split('.', 1)[0],
-                            "title": re.search(r'^\s*Điều\s*[0-9]+\.\s*(.+)', dieu).group(1),
+                            "title": re.search(r'^\s*Điều\s*[0-9]+\s*\.(.*)', dieu).group(1),
                             "type": VBPLSection.ARTICLE.name,
                             "content": dieu.replace('*', '').strip(),
                             "children": [
@@ -314,14 +316,16 @@ class VBPLChunker:
                     data.append(muc_data)
             else:
                 dieu_matches = self.parse_helper(content, VBPLSection.ARTICLE)
+                # Check if dieu exists by using the regex
+                isModernFormat = dieu_regex.findall(content)
 
-                if dieu_matches:
+                if dieu_matches and isModernFormat:
                     for dieu in dieu_matches:
                         dieu_id = f"{self.convert_to_id(dieu.strip().split('.', 1)[0].strip())}"
                         dieu_data = {
                             "id": dieu_id,
                             "id_text": dieu.strip().split('.', 1)[0],
-                            "title": re.search(r'^\s*Điều\s*[0-9]+\.\s*(.+)', dieu).group(1),
+                            "title": re.search(r'^\s*Điều\s*[0-9]+\s*\.(.*)', dieu).group(1),
                             "type": VBPLSection.ARTICLE.name,
                             "content": dieu.replace('*', '').strip(),
                             "children": [
@@ -334,6 +338,29 @@ class VBPLChunker:
                             ]
                         }
                         data.append(dieu_data)
+                else:
+                    dieu_matches = self.parse_helper(content, VBPLSection.CLAUSE)
+                    if dieu_matches:
+                        for dieu in dieu_matches:
+                            
+                            dieu_id = f"dieu_{dieu.strip().split('.', 1)[0].strip()}"
+                            dieu_data = {
+                                "id": dieu_id,
+                                "id_text": dieu.strip().split('.', 1)[0],
+                                "title": re.search(r'^\s*[0-9]+\.\s*(.+)', dieu).group(1),
+                                "type": VBPLSection.ARTICLE.name,
+                                "content": dieu.replace('*', '').strip(),
+                                # "children": [
+                                #     {
+                                #         "id": f"{self.convert_to_id(clause.split('.', 1)[0])}_{dieu_id}",
+                                #         "id_text": clause.strip().split()[0].replace('.', ''),
+                                #         "type": VBPLSection.CLAUSE.name,
+                                #         "content": clause.strip()
+                                #     } for clause in self.parse_helper(('\n'.join(dieu.strip().split('\n')[1:]).replace(f'{dieu.strip().split('.', 1)[0]}.', '')), VBPLSection.CLAUSE)
+                                # ] if re.search(r'^\s*[0-9]+\.[0-9]+\s*\.', dieu.strip(), re.MULTILINE) else []
+                                "children": []
+                            }
+                            data.append(dieu_data)
 
         # Create the final result dictionary
         dict_result = {
