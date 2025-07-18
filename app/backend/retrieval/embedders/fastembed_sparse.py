@@ -2,7 +2,7 @@ from haystack_integrations.components.embedders.fastembed import (
     FastembedSparseDocumentEmbedder,
     FastembedSparseTextEmbedder,
 )
-from vietnam_law_chatbot.core.config import settings
+from backend.core.config import settings
 
 
 def get_fastembed_sparse_document_embedder() -> FastembedSparseDocumentEmbedder:

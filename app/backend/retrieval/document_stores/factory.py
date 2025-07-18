@@ -1,7 +1,7 @@
 from haystack.document_stores.types import DocumentStore
-from vietnam_law_chatbot.core.config import settings
-from vietnam_law_chatbot.retrieval.document_stores.qdrant import get_qdrant_document_store
-from vietnam_law_chatbot.retrieval.document_stores.qdrant_hybrid import (
+from backend.core.config import settings
+from backend.retrieval.document_stores.qdrant import get_qdrant_document_store
+from backend.retrieval.document_stores.qdrant_hybrid import (
     get_qdrant_hybrid_document_store,
 )
 

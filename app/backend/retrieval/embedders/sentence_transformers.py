@@ -3,7 +3,7 @@ from haystack.components.embedders import (
     SentenceTransformersTextEmbedder,
 )
 
-from vietnam_law_chatbot.core.config import settings
+from backend.core.config import settings
 
 
 def get_sentence_transformers_document_embedder() -> SentenceTransformersDocumentEmbedder:

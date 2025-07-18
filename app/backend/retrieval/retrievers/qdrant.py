@@ -1,7 +1,7 @@
 from haystack_integrations.components.retrievers.qdrant import QdrantEmbeddingRetriever
 from haystack_integrations.document_stores.qdrant import QdrantDocumentStore
 
-from vietnam_law_chatbot.core.config import settings
+from backend.core.config import settings
 
 
 def get_qdrant_retriever(
