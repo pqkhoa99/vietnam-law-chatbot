@@ -1,5 +1,5 @@
 from haystack.dataclasses import Document
-from vietnam_law_chatbot.retrieval.utils import insert, search
+from backend.retrieval.utils import insert, search
 
 def run_test():
     """

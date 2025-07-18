@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
-from vietnam_law_chatbot.core.config import settings
+from backend.core.config import settings
 
 # Create FastAPI application
 app = FastAPI(

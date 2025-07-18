@@ -3,9 +3,9 @@ import sys
 import os
 import logging
 from loguru import logger
-from vietnam_law_chatbot.retrieval.indexing.crawler import VBPLCrawler
-from vietnam_law_chatbot.retrieval.indexing.chunking import VBPLChunker
-from vietnam_law_chatbot.core.config import settings
+from backend.retrieval.indexing.crawler import VBPLCrawler
+from backend.retrieval.indexing.chunking import VBPLChunker
+from backend.core.config import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
