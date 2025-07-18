@@ -28,19 +28,15 @@ vietnam-law-chatbot/
 ├── .env.example                    # Environment variables template
 ├── .gitignore                      # Git ignore rules
 └── app/                            # Main application
-    ├── requirements.txt            # Python dependencies
     └── backend/                    # Backend service code
+        ├── requirements.txt        # Python dependencies
         ├── main.py                 # FastAPI application entry point
         ├── core/                   # Core configurations and prompts
-        │   ├── config.py           # Application settings
-        │   └── prompts.py          # LLM system prompts
         ├── retrieval/              # Document retrieval system
         │   ├── document_stores/    # Qdrant integration
         │   ├── embedders/          # Text embedding models
         │   ├── retrievers/         # Document retrieval logic
         │   └── indexing/           # Document processing pipeline
-        │       ├── crawler.py      # VBPL document crawler
-        │       └── chunking.py     # Document chunking
         ├── chunking/               # Processed document storage
         ├── data/                   # Raw and processed data
         └── test/                   # Testing and utilities
