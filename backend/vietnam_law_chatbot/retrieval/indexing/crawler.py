@@ -1,8 +1,11 @@
 import httpx
 import html2text
 import re
+import time
+import json
 from loguru import logger
 from bs4 import BeautifulSoup
+from typing import List, Set, Tuple, Dict, Any
 
 class VBPLCrawler:
     """
@@ -11,6 +14,17 @@ class VBPLCrawler:
     def __init__(self):
         self.toanvan_url = "https://vbpl.vn/nganhangnhanuoc/Pages/vbpq-toanvan.aspx?ItemID={}"
         self.luocdo_url = "https://vbpl.vn/nganhangnhanuoc/Pages/vbpq-luocdo.aspx?ItemID={}"
+        self.categories = {
+            'thong_tu': {'idLoaiVanBan': 22, 'name': 'Thông tư', 'max_pages': 75},
+            'nghi_dinh': {'idLoaiVanBan': 3, 'name': 'Nghị định', 'max_pages': 50},
+            'quyet_dinh': {'idLoaiVanBan': 9, 'name': 'Quyết định', 'max_pages': 100},
+            'chi_thi': {'idLoaiVanBan': 6, 'name': 'Chỉ thị', 'max_pages': 30},
+            'luat': {'idLoaiVanBan': 1, 'name': 'Luật', 'max_pages': 20},
+            'phap_lenh': {'idLoaiVanBan': 2, 'name': 'Pháp lệnh', 'max_pages': 15},
+        }
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
 
     def crawl_toanvan(self, id: str) -> str:
         """
@@ -232,3 +246,116 @@ class VBPLCrawler:
                 "relationship": info.get("relationship", {})
             }
         }
+
+    def _crawl_category_page(self, url: str) -> Tuple[List[Dict[str, Any]], Set[str]]:
+        """Crawl a single category page and extract links and item IDs."""
+        try:
+            response = httpx.get(url, headers=self.headers, timeout=30)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            links, item_ids = [], set()
+            list_law = soup.find('ul', class_='listLaw')
+            
+            if list_law:
+                for li in list_law.find_all('li'):
+                    link = li.find('a', href=True)
+                    if link and link.get('href', '').startswith('/nganhangnhanuoc/Pages/vbpq-toanvan.aspx'):
+                        href = link['href']
+                        item_match = re.search(r'ItemID=(\d+)', href)
+                        item_id = item_match.group(1) if item_match else None
+                        
+                        if item_id:
+                            item_ids.add(item_id)
+                        
+                        links.append({
+                            'url': f"https://vbpl.vn{href}",
+                            'text': link.get_text(strip=True),
+                            'item_id': item_id
+                        })
+            
+            return links, item_ids
+            
+        except Exception as e:
+            logger.error(f"Error crawling page {url}: {e}")
+            return [], set()
+
+    def crawl_category(self, category: str, max_pages: int = None, save_to_file: bool = True) -> Tuple[List[Dict[str, Any]], Set[str]]:
+        """
+        Crawl documents by category from VBPL.
+        
+        Args:
+            category: Category key (e.g., 'thong_tu', 'nghi_dinh')
+            max_pages: Maximum number of pages to crawl (uses category default if None)
+            save_to_file: Whether to save item IDs to JSON file
+            
+        Returns:
+            Tuple of (all_links, item_ids)
+        """
+        if category not in self.categories:
+            raise ValueError(f"Unknown category: {category}. Available: {list(self.categories.keys())}")
+        
+        # Use category's default max_pages if not specified
+        if max_pages is None:
+            max_pages = self.categories[category]['max_pages']
+        
+        logger.info(f"Starting to crawl category: {self.categories[category]['name']} (max {max_pages} pages)")
+        
+        base_url = f"https://vbpl.vn/nganhangnhanuoc/Pages/vanban.aspx?idLoaiVanBan={self.categories[category]['idLoaiVanBan']}&dvid=326"
+        all_links, all_ids = [], set()
+        
+        for page in range(1, max_pages + 1):
+            page_url = f"{base_url}&Page={page}"
+            logger.debug(f"Crawling page {page}/{max_pages}")
+            
+            links, ids = self._crawl_category_page(page_url)
+            all_links.extend(links)
+            all_ids.update(ids)
+            
+            # Break if no links found on this page
+            if not links:
+                logger.info(f"No more links found at page {page}, stopping early")
+                break
+                
+            time.sleep(1)  # Be respectful to the server
+        
+        logger.info(f"Crawling completed. Found {len(all_links)} links and {len(all_ids)} unique IDs")
+        
+        # Save results to file if requested
+        if save_to_file:
+            output_file = f"{category}_item_ids.json"
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump({"ItemID": list(all_ids)}, f, ensure_ascii=False, indent=2)
+            logger.info(f"Item IDs saved to {output_file}")
+        
+        return all_links, all_ids
+
+    def crawl_multiple_categories(self, categories: List[str], max_pages: int = None, save_to_file: bool = True) -> Dict[str, Tuple[List[Dict[str, Any]], Set[str]]]:
+        """
+        Crawl multiple document categories.
+        
+        Args:
+            categories: List of category keys to crawl
+            max_pages: Maximum number of pages to crawl per category (uses each category's default if None)
+            save_to_file: Whether to save item IDs to JSON files
+            
+        Returns:
+            Dictionary mapping category names to (all_links, item_ids) tuples
+        """
+        results = {}
+        
+        for category in categories:
+            if category not in self.categories:
+                logger.warning(f"Skipping unknown category: {category}")
+                continue
+                
+            try:
+                # Use category-specific max_pages if global max_pages is not provided
+                category_max_pages = max_pages if max_pages is not None else self.categories[category]['max_pages']
+                results[category] = self.crawl_category(category, category_max_pages, save_to_file)
+                logger.info(f"Completed crawling {category}")
+            except Exception as e:
+                logger.error(f"Error crawling category {category}: {e}")
+                continue
+        
+        return results
