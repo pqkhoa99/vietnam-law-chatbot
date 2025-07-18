@@ -24,26 +24,26 @@ The system implements a modern RAG (Retrieval-Augmented Generation) architecture
 
 ```
 vietnam-law-chatbot/
-├── README.md               # This file
-├── .env.example            # Environment variables template
-├── .gitignore              # Git ignore rules
-└── app/                    # Main application
-    ├── requirements.txt    # Python dependencies
-    └── backend/            # Backend service code
-        ├── main.py         # FastAPI application entry point
-        ├── core/           # Core configurations and prompts
-        │   ├── config.py   # Application settings
-        │   └── prompts.py  # LLM system prompts
-        ├── retrieval/      # Document retrieval system
-        │   ├── document_stores/  # Qdrant integration
-        │   ├── embedders/  # Text embedding models
-        │   ├── retrievers/ # Document retrieval logic
-        │   └── indexing/   # Document processing pipeline
-        │       ├── crawler.py   # VBPL document crawler
-        │       └── chunking.py  # Document chunking
-        ├── chunking/       # Processed document storage
-        ├── data/           # Raw and processed data
-        ├── test/           # Testing and utilities
+├── README.md                       # README
+├── .env.example                    # Environment variables template
+├── .gitignore                      # Git ignore rules
+└── app/                            # Main application
+    ├── requirements.txt            # Python dependencies
+    └── backend/                    # Backend service code
+        ├── main.py                 # FastAPI application entry point
+        ├── core/                   # Core configurations and prompts
+        │   ├── config.py           # Application settings
+        │   └── prompts.py          # LLM system prompts
+        ├── retrieval/              # Document retrieval system
+        │   ├── document_stores/    # Qdrant integration
+        │   ├── embedders/          # Text embedding models
+        │   ├── retrievers/         # Document retrieval logic
+        │   └── indexing/           # Document processing pipeline
+        │       ├── crawler.py      # VBPL document crawler
+        │       └── chunking.py     # Document chunking
+        ├── chunking/               # Processed document storage
+        ├── data/                   # Raw and processed data
+        └── test/                   # Testing and utilities
 ```
 
 ## ✨ Key Features
@@ -156,6 +156,16 @@ python -m backend.test.retrieval_utils
 - **Backend API**: See `app/backend/README.md` for detailed backend documentation
 - **API Docs**: Available at http://localhost:8000/docs when running
 - **Configuration**: Check `.env.example` for environment variables
+
+## 🔄 CI/CD
+
+![CI](https://github.com/pqkhoa99/vietnam-law-chatbot/workflows/CI/badge.svg)
+
+Automated testing runs on every push and pull request:
+- **Python 3.11** compatibility testing
+- **Code linting** with flake8 for syntax errors
+- **Import validation** for core modules
+- **FastAPI app** startup verification
 
 ## 🤝 Contributing
 
