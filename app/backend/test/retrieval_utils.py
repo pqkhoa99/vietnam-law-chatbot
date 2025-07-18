@@ -1,5 +1,6 @@
 from haystack.dataclasses import Document
 from backend.retrieval.utils import insert, search
+from backend.core.utils import read_json_file, save_to_json_file
 
 def run_test():
     """
@@ -38,6 +39,28 @@ def run_test():
                 # The score might not always be present depending on the retriever
                 score_info = f"(Score: {doc.score})" if hasattr(doc, 'score') and doc.score is not None else ""
                 print(f"- Content: {doc.content} {score_info}")
+        else:
+            print("No results found.")
+    except Exception as e:
+        print(f"An error occurred during search: {e}")
+
+
+def run_query(query):
+    """
+    A simple script to test the search functionality with a specific query.
+    """
+    print(f"Running query test with query: '{query}'")
+    
+    # Search for the query
+    try:
+        results = search(query)
+        # 4. Print the results
+        print("\nSearch results:")
+        if results:
+            for doc in results:
+                # The score might not always be present depending on the retriever
+                score_info = f"(Score: {doc.score})" if hasattr(doc, 'score') and doc.score is not None else ""
+                print(f"- Content: {doc.content[:50]} {score_info}")
         else:
             print("No results found.")
     except Exception as e:
