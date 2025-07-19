@@ -69,19 +69,17 @@ python -m uvicorn backend.main:app --reload
 
 ## 🔄 CI/CD
 
-![CI](https://github.com/pqkhoa99/vietnam-law-chatbot/img/badge.svg)
-
 Automated testing runs on every push and pull request:
 - **Python 3.11** compatibility testing
 - **Code linting** with flake8 for syntax errors
 - **Import validation** for core modules
 - **FastAPI app** startup verification
-- 
+  
 ## 🤝 Contributing
 
 This project is part of my Master's thesis. For questions or collaboration:
 
-**Author**: Khoa Phan
-**Email**: pqkhoa99@gmail.com
+- **Author**: Khoa Phan
+- **Email**: pqkhoa99@gmail.com
 
 
