@@ -6,6 +6,9 @@ from loguru import logger
 from backend.retrieval.indexing.crawler import VBPLCrawler
 from backend.retrieval.indexing.chunking import VBPLChunker
 from backend.core.config import settings
+from backend.core.utils import read_json_file, save_to_json_file
+from backend.retrieval.utils import insert
+from haystack.dataclasses import Document
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -145,6 +148,125 @@ def test_crawl_and_chunk_with_llm(document_id, openai_client=None):
     logger.info(f"LLM Statistics for document {document_id}:")
     logger.info(f"Total top-level sections: {total_sections}")
     logger.info(f"Total articles: {total_articles}")
+
+def extract_dieu_data(dieu_id):
+    """
+    Extract article data from a specific document ID and save to JSON file.
+    
+    Args:
+        dieu_id (str): The document ID to extract articles from
+        
+    Returns:
+        list: List of extracted article data with id and content
+    """    
+    # Read the chunking data
+    data = read_json_file('backend/data/chunking_data.json')
+    dieu_info = []
+    
+    if dieu_id is None:
+        for doc in data:
+            dieu_info.extend(_extract_articles_from_parts(doc.get("data", [])))
+            break
+    else:
+        for doc in data:
+            if doc.get("document_info", {}).get("document_id") == dieu_id:
+                dieu_info.extend(_extract_articles_from_parts(doc.get("data", [])))
+                break
+    
+    # Save extracted data to file
+    output_filename = f"backend/data/dieu_data_{dieu_id}.json"
+    save_to_json_file(dieu_info, output_filename)
+    return dieu_info
+
+def _extract_articles_from_parts(parts):
+    """
+    Helper function to recursively extract articles from document parts.
+    
+    Args:
+        parts (list): List of document parts (chapters, sections, articles)
+        
+    Returns:
+        list: List of extracted articles with id and content
+    """
+    articles = []
+    
+    for part in parts:
+        part_type = part.get("type")
+        
+        if part_type == "ARTICLE":
+            # Direct article - extract it
+            article_data = {
+                "id": part.get("id"),
+                "content": part.get("content", ""),
+            }
+            articles.append(article_data)
+            
+        elif part_type in ["CHAPTER", "SECTION"]:
+            # Container element - recursively extract articles from children
+            children = part.get("children", [])
+            articles.extend(_extract_articles_from_parts(children))
+            
+        else:
+            # Unknown type - log warning
+            logger.warning(f"Unknown part type encountered: {part_type}")
+    return articles
+
+def embedding_dieu_data(dieu_id):
+    """
+    Embed article data from a specific document ID into Qdrant vector database.
+    
+    Args:
+        dieu_id (str, optional): The document ID to embed articles from. 
+                                If None, uses default dieu_data.json file.
+        
+    Returns:
+        bool: True if embedding was successful, False otherwise
+    """
+    # Determine the data file path
+    if dieu_id is None:
+        data_file = 'backend/data/dieu_data.json'
+    else:
+        data_file = f'backend/data/dieu_data_{dieu_id}.json'
+    
+    dieu_data = read_json_file(data_file)
+    documents = []
+
+    for i, item in enumerate(dieu_data):            
+        # Create Document object
+        doc = Document(
+            content=item['content'],
+            meta={
+                'id': item['id'],
+            }
+        )
+        documents.append(doc)
+        
+    # Insert documents into Qdrant
+    logger.info(f"📄 Embedding {len(documents)} documents into Qdrant...")
+    insert(documents)
+    logger.info("✅ Documents successfully embedded and stored in Qdrant!")
+
+
+def extract_and_embed_dieu_data(dieu_id):
+    """
+    Complete pipeline to extract article data and embed it into Qdrant.
+    
+    Args:
+        dieu_id (str): The document ID to extract and embed articles from
+        
+    Returns:
+        bool: True if the complete pipeline was successful, False otherwise
+    """
+    try:
+        # Step 1: Extract article data
+        logger.info("📝 Step 1: Extracting article data...")
+        articles = extract_dieu_data(dieu_id)
+        # Step 2: Embed the extracted data
+        logger.info("🔄 Step 2: Embedding article data...")
+        embedding_dieu_data(dieu_id)
+    except Exception as e:
+        logger.error(f"❌ Pipeline failed for document ID {dieu_id}: {e}")
+        return False
 
 def main():
     """

@@ -41,6 +41,7 @@ Thumbs.db
 
 # dataset
 data/
+qdrant_data/
 
 # Environment variables
 .env
