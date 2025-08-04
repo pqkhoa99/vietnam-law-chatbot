@@ -272,14 +272,17 @@ def main():
     """
     Main function to run the test.
     """
-    logger.info("Starting crawl and chunk test")
+
+    embedding_dieu_data("160901")
+
+    # logger.info("Starting crawl and chunk test")
     
-    # Process document IDs from command line if provided
-    document_ids = sys.argv[1:] if len(sys.argv) > 1 else SAMPLE_DOCUMENT_IDS
+    # # Process document IDs from command line if provided
+    # document_ids = sys.argv[1:] if len(sys.argv) > 1 else SAMPLE_DOCUMENT_IDS
     
-    for document_id in document_ids:
-        # Test prefix-based chunking
-        test_crawl_and_chunk_by_prefix(document_id)
+    # for document_id in document_ids:
+    #     # Test prefix-based chunking
+    #     test_crawl_and_chunk_by_prefix(document_id)
         
         # To test LLM-based chunking, uncomment and provide OpenAI client:
         # from openai import OpenAI

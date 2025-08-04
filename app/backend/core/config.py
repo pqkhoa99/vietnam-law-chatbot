@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-3.5-turbo"
     OPENAI_PARSE_MODEL: str = "deepseek-ai/DeepSeek-V3-0324"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    
+    # Generation settings
+    GENERATION_TEMPERATURE: float = 0.1
+    GENERATION_MAX_TOKENS: int = 1000
+    GENERATION_TOP_P: float = 1.0
 
     # Parse settings
     CONCURRENCY_LIMIT: int = 5
