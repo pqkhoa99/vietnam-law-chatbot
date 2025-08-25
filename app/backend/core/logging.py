@@ -66,6 +66,29 @@ def setup_logging(log_level: str = "INFO", log_file: str = None):
     logging.getLogger('httpx').setLevel(logging.WARNING)
     logging.getLogger('neo4j').setLevel(logging.WARNING)
     logging.getLogger('qdrant_client').setLevel(logging.WARNING)
+    
+    # Suppress Uvicorn's default startup/reload messages
+    logging.getLogger('uvicorn.error').setLevel(logging.WARNING)
+    
+    # Configure Uvicorn loggers to use the same formatting
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    uvicorn_access.handlers = []
+    for handler in handlers:
+        uvicorn_access.addHandler(handler)
+    uvicorn_access.propagate = False
+    
+    uvicorn_error = logging.getLogger("uvicorn.error")
+    uvicorn_error.handlers = []
+    for handler in handlers:
+        uvicorn_error.addHandler(handler)
+    uvicorn_error.propagate = False
+    
+    # Configure uvicorn main logger
+    uvicorn_logger = logging.getLogger("uvicorn")
+    uvicorn_logger.handlers = []
+    for handler in handlers:
+        uvicorn_logger.addHandler(handler)
+    uvicorn_logger.propagate = False
 
 
 def get_logger(name: str) -> logging.Logger:

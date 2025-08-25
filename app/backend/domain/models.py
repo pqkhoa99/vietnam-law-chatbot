@@ -57,7 +57,7 @@ class ChatRequest(BaseModel):
     context: Optional[Dict[str, Any]] = Field(None, description="Additional context for the query")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "message": "Điều kiện để mở tài khoản ngân hàng là gì?",
                 "session_id": "session_123",

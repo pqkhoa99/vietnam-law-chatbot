@@ -1,7 +1,7 @@
 from haystack.document_stores.types import DocumentStore
-from backend.core.config import settings
-from backend.retrieval.document_stores.qdrant import get_qdrant_document_store
-from backend.retrieval.document_stores.qdrant_hybrid import (
+from core.config import settings
+from retrieval.document_stores.qdrant import get_qdrant_document_store
+from retrieval.document_stores.qdrant_hybrid import (
     get_qdrant_hybrid_document_store,
 )
 

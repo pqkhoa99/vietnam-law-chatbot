@@ -1,8 +1,8 @@
 from typing import List, Optional
 import logging
 
-from backend.domain.models import RetrievedDocument, RelatedDocument, Relationships
-from backend.core.config import settings
+from domain.models import RetrievedDocument, RelatedDocument, Relationships
+from core.config import settings
 from neo4j import GraphDatabase, Driver
 
 logger = logging.getLogger(__name__)
@@ -84,6 +84,7 @@ class Neo4jService:
 
         try:
             with self.driver.session() as session:
+                logger.info(f"Starting retrieve relationships for document ids: {[doc.id for doc in documents]}")
                 for i, doc in enumerate(documents):
                     result = session.run(cypher, {"id": doc.id})
                     record = result.single()
@@ -120,7 +121,7 @@ class Neo4jService:
             # Optional: brief summary log
             total_in = sum(len(d.relationships.incoming) for d in documents)
             total_out = sum(len(d.relationships.outgoing) for d in documents)
-            logger.info(f"Populated relationships for {len(documents)} documents "
+            logger.info(f"Sucessfully retrieve relationships for {len(documents)} documents "
                         f"(incoming={total_in}, outgoing={total_out})")
 
             return documents

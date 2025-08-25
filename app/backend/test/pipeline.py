@@ -1,8 +1,8 @@
-from backend.core.utils import read_json_file, save_to_json_file
-from backend.retrieval.utils import insert
+from core.utils import read_json_file, save_to_json_file
+from retrieval.utils import insert
 from haystack.dataclasses import Document
-from backend.test.retrieval_utils import run_query_with_generation
-from backend.core.config import settings
+from test.retrieval_utils import run_query_with_generation
+from core.config import settings
 from neo4j import GraphDatabase
 
 test_document_ids = ["157663", "171352", "34094"]
@@ -145,30 +145,30 @@ def run_neo4j_query(parameters):
             # Print center article
             if data['a']:
                 print("CENTER ARTICLE:")
-                print(f"  ID: {data['a'].get('id', 'N/A')}")
-                print(f"  Title: {data['a'].get('title', 'N/A')[:100]}...")
-                print(f"  Document ID: {data['a'].get('document_id', 'N/A')}")
-                print(f"  Status: {data['a'].get('document_status', 'N/A')}")
+                print(f"ID: {data['a'].get('id', 'N/A')}")
+                print(f"Title: {data['a'].get('title', 'N/A')[:100]}...")
+                print(f"Document ID: {data['a'].get('document_id', 'N/A')}")
+                print(f"Status: {data['a'].get('document_status', 'N/A')}")
                 print()
             
             # Print outgoing relationship
             if data['r1'] and data['b']:
                 print("OUTGOING RELATIONSHIP:")
                 rel_type = data['r1'].type if hasattr(data['r1'], 'type') else str(type(data['r1']))
-                print(f"  Relationship Type: {rel_type}")
-                print(f"  Target Article ID: {data['b'].get('id', 'N/A')}")
-                print(f"  Target Title: {data['b'].get('title', 'N/A')[:100]}...")
-                print(f"  Target Document: {data['b'].get('document_id', 'N/A')}")
+                print(f"Relationship Type: {rel_type}")
+                print(f"Target Article ID: {data['b'].get('id', 'N/A')}")
+                print(f"Target Title: {data['b'].get('title', 'N/A')[:100]}...")
+                print(f"Target Document: {data['b'].get('document_id', 'N/A')}")
                 print()
             
             # Print incoming relationship
             if data['r2'] and data['c']:
                 print("INCOMING RELATIONSHIP:")
                 rel_type = data['r2'].type if hasattr(data['r2'], 'type') else str(type(data['r2']))
-                print(f"  Relationship Type: {rel_type}")
-                print(f"  Source Article ID: {data['c'].get('id', 'N/A')}")
-                print(f"  Source Title: {data['c'].get('title', 'N/A')[:100]}...")
-                print(f"  Source Document: {data['c'].get('document_id', 'N/A')}")
+                print(f"Relationship Type: {rel_type}")
+                print(f"Source Article ID: {data['c'].get('id', 'N/A')}")
+                print(f"Source Title: {data['c'].get('title', 'N/A')[:100]}...")
+                print(f"Source Document: {data['c'].get('document_id', 'N/A')}")
                 print()
             
             print("-" * 80)

@@ -2,8 +2,8 @@
 Factory for creating text generators.
 """
 from typing import Any
-from backend.core.config import settings
-from backend.retrieval.generation.openai_generator import OpenAIGenerator
+from core.config import settings
+from retrieval.generation.openai_generator import OpenAIGenerator
 
 
 def create_generator(generator_type: str = "openai", **kwargs) -> Any:

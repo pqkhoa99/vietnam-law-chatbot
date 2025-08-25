@@ -4,8 +4,8 @@ OpenAI-based text generation component for RAG.
 from typing import List, Optional, Dict, Any
 import openai
 from haystack.dataclasses import Document
-from backend.core.config import settings
-from backend.core.prompts import VIETNAMESE_LEGAL_ASSISTANT_PROMPT, RAG_CONTEXT_INSTRUCTION
+from core.config import settings
+from core.prompts import VIETNAMESE_LEGAL_ASSISTANT_PROMPT, RAG_CONTEXT_INSTRUCTION
 
 
 class OpenAIGenerator:

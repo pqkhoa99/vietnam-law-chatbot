@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from loguru import logger
 
-from backend.domain.models import ChatRequest, ChatResponse, HealthResponse
-from backend.services.chat_service import ChatService
-from backend.core.config import settings
+from domain.models import ChatRequest, ChatResponse, HealthResponse
+from services.chat_service import ChatService
+from core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ async def chat(request: ChatRequest):
     Process a chat message through linear RAG flow: Qdrant → Neo4j → LLM.
     """
     try:
-        logger.info(f"Processing chat request: {request.message[:100]}...")
+        logger.info(f"Receive /chat request: {request}")
         
         # Validate message length
         if len(request.message.strip()) == 0:

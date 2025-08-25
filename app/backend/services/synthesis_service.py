@@ -8,9 +8,9 @@ from openai import OpenAI
 from loguru import logger
 import logging
 
-from backend.core.config import settings
-from backend.core.prompts import LEGAL_RAG_PROMPT
-from backend.domain.models import RetrievedDocument
+from core.config import settings
+from core.prompts import LEGAL_RAG_PROMPT
+from domain.models import RetrievedDocument
 
 logger = logging.getLogger(__name__)
 
@@ -33,18 +33,14 @@ class SynthesisService:
         Generate response using retrieved documents and relationships.
         """
         try:
-            # Prepare structured context from retrieved documents with relationships
             context = self._prepare_structured_context(related_documents)
-            
-            # Truncate context if needed to avoid token limits
-            # context = self._truncate_context_if_needed(context)
 
             content = f"""
                 <input>{query}</input>
                 <legal_documents>{context}</legal_documents>
             """.strip()
 
-            logger.info(f"Prepared context for query: {query[:100]}... (context tokens: ~{self._count_tokens(context)})")
+            logger.info(f"Prepared context for query ~{self._count_tokens(context)}")
                 
             response = self.client.chat.completions.create(
                 model=settings.OPENAI_MODEL,
@@ -56,7 +52,7 @@ class SynthesisService:
             )
             
             generated_response = response.choices[0].message.content
-            logger.info(f"Successfully generated response using OpenAI")
+            logger.info(f"Successfully generated response using OpenAI model {settings.OPENAI_MODEL}")
             
             return generated_response
             
@@ -153,41 +149,6 @@ class SynthesisService:
             logger.warning(f"Token counting failed, using character estimate: {e}")
             return len(text) // 4  # Rough estimate: 4 chars per token
     
-    def _truncate_context_if_needed(self, context: str, max_tokens: int = 12000) -> str:
-        """
-        Truncate context if it exceeds token limits while preserving structure.
-        """
-        token_count = self._count_tokens(context)
-        
-        if token_count <= max_tokens:
-            return context
-        
-        logger.warning(f"Context too long ({token_count} tokens), truncating to {max_tokens} tokens")
-        
-        try:
-            # Parse JSON to truncate intelligently
-            documents_data = json.loads(context)
-            
-            # Truncate document content while preserving metadata and relationships
-            for doc in documents_data:
-                if self._count_tokens(context) <= max_tokens:
-                    break
-                    
-                content = doc.get("content", "")
-                if len(content) > 1000:  # Only truncate long content
-                    # Keep first part of content and add truncation notice
-                    doc["content"] = content[:800] + "... [nội dung đã được rút gọn]"
-                    context = json.dumps(documents_data, ensure_ascii=False, indent=2)
-            
-            return context
-            
-        except json.JSONDecodeError:
-            # Fallback: simple character truncation
-            target_chars = max_tokens * 3  # Rough estimate
-            if len(context) > target_chars:
-                return context[:target_chars] + "... [nội dung đã được rút gọn]"
-            return context
-        
     
     def health_check(self) -> bool:
         """
@@ -198,7 +159,7 @@ class SynthesisService:
             test_response = self.client.chat.completions.create(
                 model=settings.OPENAI_MODEL,
                 messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=5
+                max_tokens=settings.GENERATION_MAX_TOKENS
             )
             return test_response.choices[0].message.content is not None
         except Exception as e:

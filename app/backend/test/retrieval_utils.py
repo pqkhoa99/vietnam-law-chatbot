@@ -1,6 +1,6 @@
 from haystack.dataclasses import Document
-from backend.retrieval.utils import insert, search, generate_response, ask_question
-from backend.core.utils import read_json_file, save_to_json_file
+from retrieval.utils import insert, search, generate_response, ask_question
+from core.utils import read_json_file, save_to_json_file
 
 def run_test():
     """

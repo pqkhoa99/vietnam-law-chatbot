@@ -3,11 +3,11 @@ import sys
 import os
 import logging
 from loguru import logger
-from backend.retrieval.indexing.crawler import VBPLCrawler
-from backend.retrieval.indexing.chunking import VBPLChunker
-from backend.core.config import settings
-from backend.core.utils import read_json_file, save_to_json_file
-from backend.retrieval.utils import insert
+from retrieval.indexing.crawler import VBPLCrawler
+from retrieval.indexing.chunking import VBPLChunker
+from core.config import settings
+from core.utils import read_json_file, save_to_json_file
+from retrieval.utils import insert
 from haystack.dataclasses import Document
 
 # Configure logging

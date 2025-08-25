@@ -3,11 +3,11 @@ from haystack.dataclasses import Document
 from haystack.components.writers import DocumentWriter
 from haystack.document_stores.types import DuplicatePolicy
 
-from backend.core.config import settings
-from backend.retrieval.document_stores.factory import document_store
-from backend.retrieval.embedders.factory import document_embedder, text_embedder
-from backend.retrieval.retrievers.factory import retriever
-from backend.retrieval.generation.factory import generator
+from core.config import settings
+from retrieval.document_stores.factory import document_store
+from retrieval.embedders.factory import document_embedder, text_embedder
+from retrieval.retrievers.factory import retriever
+from retrieval.generation.factory import generator
 
 
 def insert(documents: List[Document]):
@@ -19,7 +19,7 @@ def insert(documents: List[Document]):
     writer = DocumentWriter(document_store=document_store, policy=DuplicatePolicy.OVERWRITE)
 
     if document_store_type == "qdrant_hybrid":
-        from backend.retrieval.embedders.fastembed_sparse import get_fastembed_sparse_document_embedder
+        from retrieval.embedders.fastembed_sparse import get_fastembed_sparse_document_embedder
 
         sparse_doc_embedder = get_fastembed_sparse_document_embedder()
 
@@ -43,7 +43,7 @@ def search(query: str) -> List[Document]:
     document_store_type = settings.DOCUMENT_STORE_TYPE
     
     if document_store_type == "qdrant_hybrid":
-        from backend.retrieval.embedders.fastembed_sparse import get_fastembed_sparse_text_embedder
+        from retrieval.embedders.fastembed_sparse import get_fastembed_sparse_text_embedder
 
         sparse_text_embedder = get_fastembed_sparse_text_embedder()
 

@@ -2,9 +2,9 @@ from typing import List, Dict, Any, Literal
 from qdrant_client import QdrantClient
 import logging
 
-from backend.domain.models import RetrievedDocument
-from backend.core.config import settings
-from backend.retrieval.utils import search
+from domain.models import RetrievedDocument
+from core.config import settings
+from retrieval.utils import search
 
 logger = logging.getLogger(__name__)
 RetrievalMode = Literal["dense", "sparse", "hybrid"]
@@ -36,9 +36,7 @@ class QdrantService:
         ) -> List[RetrievedDocument]:
             """Retrieve documents similar to the query using specified mode."""
             
-            try:
-                logger.info(f"Retrieving documents for query: {query[:50]}...")
-                
+            try:                
                 # Use existing search function from retrieval utils
                 search_results = search(query)
                 
@@ -64,11 +62,11 @@ class QdrantService:
                         huong_dan_quy_dinh=doc.meta.get("huong_dan_quy_dinh", "unknown"),
                     )        
                     retrieved_docs.append(retrieved_doc)
-                logger.info(f"Retrieved {len(retrieved_docs)} documents using {mode} mode")
+                logger.info(f"Sucessfully retrieved {len(retrieved_docs)} documents [document IDs: {[doc.id for doc in retrieved_docs]}]")
 
                 # Apply threshold filtering
                 filtered_docs = [doc for doc in retrieved_docs if doc.score >= threshold]
-                logger.info(f"Filtered down to {len(filtered_docs)} documents above threshold {threshold}")
+                logger.info(f"Filtered down to {len(filtered_docs)} documents above threshold {threshold} [document IDs: {[doc.id for doc in filtered_docs]}]")
 
                 return filtered_docs
 

@@ -6,10 +6,9 @@ import uvicorn
 from contextlib import asynccontextmanager
 import time
 
-from backend.core.config import settings
-from backend.api.routes import router
-from backend.services import chat_service
-from backend.core.logging import setup_logging
+from core.config import settings
+from api.routes import router
+from core.logging import setup_logging
 
 # Setup colored logging
 setup_logging(
@@ -19,6 +18,18 @@ setup_logging(
 
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan events."""
+    # Startup
+    logger.info("🚀 Starting Vietnam Law Chatbot API")
+    logger.info(f"🔧 Debug mode: {settings.DEBUG_MODE}")
+    logger.info(f"🌐 Server will run on http://{settings.HOST}:{settings.PORT}")
+    logger.info("✅ Application startup complete")
+    yield
+    # Shutdown
+    logger.info("🛑 Shutting down Vietnam Law Chatbot API")
+
 # Create FastAPI application
 app = FastAPI(
     title="Law Chatbot API",
@@ -26,6 +37,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
@@ -93,10 +105,12 @@ async def log_requests(request: Request, call_next):
 if __name__ == "__main__":
     import time
     
+    # Configure uvicorn to use our logging
     uvicorn.run(
         "main:app",
-        host=settings.host,
-        port=settings.port,
+        host=settings.HOST,
+        port=settings.PORT,
         reload=settings.DEBUG_MODE,
-        log_level="info"
+        log_config=None,  # Disable uvicorn's default logging config
+        access_log=False,  # Disable uvicorn's access logging (we handle it in middleware)
     )

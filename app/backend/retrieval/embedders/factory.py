@@ -7,12 +7,12 @@ from haystack.components.embedders import (
     SentenceTransformersTextEmbedder,
 )
 
-from backend.core.config import settings
-from backend.retrieval.embedders.openai import (
+from core.config import settings
+from retrieval.embedders.openai import (
     get_openai_document_embedder,
     get_openai_text_embedder,
 )
-from backend.retrieval.embedders.sentence_transformers import (
+from retrieval.embedders.sentence_transformers import (
     get_sentence_transformers_document_embedder,
     get_sentence_transformers_text_embedder,
 )

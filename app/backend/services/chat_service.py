@@ -3,11 +3,11 @@ import uuid
 from datetime import datetime
 import logging
 
-from backend.domain.models import ChatRequest, ChatResponse
-from backend.services.qdrant_service import qdrant_service, RetrievalMode
-from backend.services.neo4j_service import neo4j_service
-from backend.services.synthesis_service import synthesis_service
-from backend.core.config import settings
+from domain.models import ChatRequest, ChatResponse
+from services.qdrant_service import qdrant_service, RetrievalMode
+from services.neo4j_service import neo4j_service
+from services.synthesis_service import synthesis_service
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +32,10 @@ class ChatService:
             # Generate conversation ID if not provided
             session_id = request.session_id or f"conv_{uuid.uuid4().hex[:8]}"
             
-            logger.info(f"  Processing chat request (ID: {session_id}: {request.message} )")
+            logger.info(f"Processing chat request (ID: {session_id} )")
             
             # Step 1: Qdrant retrieval
-            logger.info(f"  Step 1: Retrieving similar documents from Qdrant using {retrieval_mode} mode")
+            logger.info(f"Step 1: Retrieving similar documents from Qdrant using {retrieval_mode} mode")
             retrieved_documents = await self.qdrant_service.retrieve_similar_documents(
                 query=request.message,
                 mode=retrieval_mode,
@@ -44,14 +44,14 @@ class ChatService:
             )
             
             # Step 2: Neo4j expansion
-            logger.info("   Step 2: Expanding with related documents from Neo4j")
+            logger.info("Step 2: Expanding with related documents and relationships from Neo4j")
             related_documents = self.neo4j_service.get_document_relationships(
                 query=request.message,
                 documents=retrieved_documents
             )
             
             # Step 3: LLM synthesis
-            logger.info("   Step 3: Synthesizing response using LLM")
+            logger.info("Step 3: Synthesizing response using LLM")
             response_text = self.synthesis_service.generate_response(
                 query=request.message,
                 related_documents=related_documents
@@ -69,12 +69,12 @@ class ChatService:
                 metadata={"processing_time": processing_time}
             )
             
-            logger.info(f"✅ Chat request processed successfully in {processing_time:.2f}s")
+            logger.info(f"Response for request (ID: {session_id}): {chat_response.message}...")
             return chat_response
             
         except Exception as e:
             processing_time = time.time() - start_time
-            logger.error(f"❌ Failed to process chat request: {e}")
+            logger.error(f"Failed to process chat request (ID: {session_id}): {e}")
             # Return error response
             processing_time = time.time() - start_time
             return ChatResponse(
