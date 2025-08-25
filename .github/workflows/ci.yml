@@ -32,5 +32,5 @@ jobs:
     - name: Test imports
       run: |
         cd app/backend
-        python -c "import backend.core.config; print('✅ Config import successful')"
-        python -c "import backend.main; print('✅ FastAPI app validation passed')"
+        python -c "import core.config; print('✅ Config import successful')"
+        python -c "import main; print('✅ FastAPI app validation passed')"
