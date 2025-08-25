@@ -1,6 +1,6 @@
 from haystack_integrations.document_stores.qdrant import QdrantDocumentStore
 
-from backend.core.config import settings
+from core.config import settings
 
 
 def get_qdrant_document_store() -> QdrantDocumentStore:

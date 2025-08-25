@@ -2,7 +2,7 @@ from haystack_integrations.components.embedders.fastembed import (
     FastembedSparseDocumentEmbedder,
     FastembedSparseTextEmbedder,
 )
-from backend.core.config import settings
+from core.config import settings
 
 
 def get_fastembed_sparse_document_embedder() -> FastembedSparseDocumentEmbedder:

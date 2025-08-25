@@ -3,8 +3,8 @@ import json
 import unicodedata
 from enum import Enum
 from loguru import logger
-from backend.core.config import settings
-from backend.core.prompts import CHUNKING_SYSTEM_PROMPT, PARSING_RELATIONSHIP_PROMPT
+from core.config import settings
+from core.prompts import CHUNKING_SYSTEM_PROMPT, PARSING_RELATIONSHIP_PROMPT
 
 class VBPLSection(Enum):
     """

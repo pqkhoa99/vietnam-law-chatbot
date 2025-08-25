@@ -1,7 +1,7 @@
 from haystack_integrations.components.retrievers.qdrant import QdrantHybridRetriever
 from haystack_integrations.document_stores.qdrant import QdrantDocumentStore
 
-from backend.core.config import settings
+from core.config import settings
 
 
 def get_qdrant_hybrid_retriever(

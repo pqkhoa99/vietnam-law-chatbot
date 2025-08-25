@@ -50,7 +50,7 @@ vietnam-law-chatbot/
 2. **Install and run:**
    ```bash
    pip install -r requirements.txt
-   python -m uvicorn backend.main:app --reload
+   python -m uvicorn main:app --reload
    ```
 
 3. **Access:**
@@ -61,10 +61,10 @@ vietnam-law-chatbot/
 
 ```bash
 # Test document processing
-python -m backend.test.indexing [document_id]
+python -m test.indexing [document_id]
 
 # Start development server
-python -m uvicorn backend.main:app --reload
+python -m uvicorn main:app --reload
 ```
 
 ## 🔄 CI/CD

@@ -1,7 +1,7 @@
 from haystack.document_stores.types import DocumentStore
-from backend.core.config import settings
-from backend.retrieval.document_stores.qdrant import get_qdrant_document_store
-from backend.retrieval.document_stores.qdrant_hybrid import (
+from core.config import settings
+from retrieval.document_stores.qdrant import get_qdrant_document_store
+from retrieval.document_stores.qdrant_hybrid import (
     get_qdrant_hybrid_document_store,
 )
 
@@ -23,7 +23,7 @@ class DocumentStoreFactory:
         elif document_store_type == "qdrant_hybrid":
             return get_qdrant_hybrid_document_store()
         else:
-            raise ValueError(f"Unknown document store type: {document_store_type}")
+            raise ValueError(f"unknown document store type: {document_store_type}")
 
 
 document_store = DocumentStoreFactory.get_document_store()

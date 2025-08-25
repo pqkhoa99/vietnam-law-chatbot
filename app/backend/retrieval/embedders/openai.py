@@ -4,7 +4,7 @@ from haystack.components.embedders import (
 )
 from haystack.utils import Secret
 
-from backend.core.config import settings
+from core.config import settings
 
 
 def get_openai_document_embedder() -> OpenAIDocumentEmbedder:

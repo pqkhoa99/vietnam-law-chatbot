@@ -1,7 +1,7 @@
-from backend.core.config import settings
-from backend.retrieval.document_stores import document_store
-from backend.retrieval.retrievers.qdrant import get_qdrant_retriever
-from backend.retrieval.retrievers.qdrant_hybrid import (
+from core.config import settings
+from retrieval.document_stores import document_store
+from retrieval.retrievers.qdrant import get_qdrant_retriever
+from retrieval.retrievers.qdrant_hybrid import (
     get_qdrant_hybrid_retriever,
 )
 from haystack_integrations.components.retrievers.qdrant import QdrantEmbeddingRetriever, QdrantHybridRetriever
@@ -25,7 +25,7 @@ class RetrieverFactory:
             return get_qdrant_hybrid_retriever(document_store)
         else:
             raise ValueError(
-                f"Unknown document store type for retriever: {document_store_type}"
+                f"unknown document store type for retriever: {document_store_type}"
             )
 
 

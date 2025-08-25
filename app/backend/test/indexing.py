@@ -3,11 +3,11 @@ import sys
 import os
 import logging
 from loguru import logger
-from backend.retrieval.indexing.crawler import VBPLCrawler
-from backend.retrieval.indexing.chunking import VBPLChunker
-from backend.core.config import settings
-from backend.core.utils import read_json_file, save_to_json_file
-from backend.retrieval.utils import insert
+from retrieval.indexing.crawler import VBPLCrawler
+from retrieval.indexing.chunking import VBPLChunker
+from core.config import settings
+from core.utils import read_json_file, save_to_json_file
+from retrieval.utils import insert
 from haystack.dataclasses import Document
 
 # Configure logging
@@ -48,7 +48,7 @@ def test_crawl_and_chunk_by_prefix(document_id):
         logger.error(f"Failed to crawl document with ID: {document_id}")
         return
     
-    logger.info(f"Successfully crawled document: {document_data.get('document_info', {}).get('document_title', 'Unknown')}")
+    logger.info(f"Successfully crawled document: {document_data.get('document_info', {}).get('document_title', 'unknown')}")
     
     # Initialize chunker
     from openai import OpenAI
@@ -119,7 +119,7 @@ def test_crawl_and_chunk_with_llm(document_id, openai_client=None):
         logger.error(f"Failed to crawl document with ID: {document_id}")
         return
     
-    logger.info(f"Successfully crawled document: {document_data.get('document_info', {}).get('document_title', 'Unknown')}")
+    logger.info(f"Successfully crawled document: {document_data.get('document_info', {}).get('document_title', 'unknown')}")
     
     # Initialize chunker with OpenAI client
     chunker = VBPLChunker(openai_client=openai_client)
@@ -207,8 +207,8 @@ def _extract_articles_from_parts(parts):
             articles.extend(_extract_articles_from_parts(children))
             
         else:
-            # Unknown type - log warning
-            logger.warning(f"Unknown part type encountered: {part_type}")
+            # unknown type - log warning
+            logger.warning(f"unknown part type encountered: {part_type}")
     return articles
 
 def embedding_dieu_data(dieu_id):
@@ -272,14 +272,17 @@ def main():
     """
     Main function to run the test.
     """
-    logger.info("Starting crawl and chunk test")
+
+    embedding_dieu_data("160901")
+
+    # logger.info("Starting crawl and chunk test")
     
-    # Process document IDs from command line if provided
-    document_ids = sys.argv[1:] if len(sys.argv) > 1 else SAMPLE_DOCUMENT_IDS
+    # # Process document IDs from command line if provided
+    # document_ids = sys.argv[1:] if len(sys.argv) > 1 else SAMPLE_DOCUMENT_IDS
     
-    for document_id in document_ids:
-        # Test prefix-based chunking
-        test_crawl_and_chunk_by_prefix(document_id)
+    # for document_id in document_ids:
+    #     # Test prefix-based chunking
+    #     test_crawl_and_chunk_by_prefix(document_id)
         
         # To test LLM-based chunking, uncomment and provide OpenAI client:
         # from openai import OpenAI
