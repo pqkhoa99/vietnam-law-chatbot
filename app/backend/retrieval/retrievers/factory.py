@@ -25,7 +25,7 @@ class RetrieverFactory:
             return get_qdrant_hybrid_retriever(document_store)
         else:
             raise ValueError(
-                f"Unknown document store type for retriever: {document_store_type}"
+                f"unknown document store type for retriever: {document_store_type}"
             )
 
 

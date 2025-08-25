@@ -12,6 +12,9 @@ pydantic
 # Env
 python-dotenv
 
+# Database
+neo4j
+
 # Haystack
 haystack-ai
 qdrant-haystack
@@ -24,6 +27,7 @@ loguru
 # LLM
 huggingface_hub
 openai
+tiktoken
 
 # Data
 pandas

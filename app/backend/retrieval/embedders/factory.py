@@ -35,7 +35,7 @@ class EmbedderFactory:
         elif embedder_type == "sentence-transformers":
             return get_sentence_transformers_document_embedder()
         else:
-            raise ValueError(f"Unknown embedder type for documents: {embedder_type}")
+            raise ValueError(f"unknown embedder type for documents: {embedder_type}")
 
     @staticmethod
     def get_text_embedder() -> Union[OpenAITextEmbedder, SentenceTransformersTextEmbedder]:
@@ -50,7 +50,7 @@ class EmbedderFactory:
         elif embedder_type == "sentence-transformers":
             return get_sentence_transformers_text_embedder()
         else:
-            raise ValueError(f"Unknown embedder type for text: {embedder_type}")
+            raise ValueError(f"unknown embedder type for text: {embedder_type}")
 
 
 document_embedder = EmbedderFactory.get_document_embedder()

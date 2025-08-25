@@ -48,7 +48,7 @@ def test_crawl_and_chunk_by_prefix(document_id):
         logger.error(f"Failed to crawl document with ID: {document_id}")
         return
     
-    logger.info(f"Successfully crawled document: {document_data.get('document_info', {}).get('document_title', 'Unknown')}")
+    logger.info(f"Successfully crawled document: {document_data.get('document_info', {}).get('document_title', 'unknown')}")
     
     # Initialize chunker
     from openai import OpenAI
@@ -119,7 +119,7 @@ def test_crawl_and_chunk_with_llm(document_id, openai_client=None):
         logger.error(f"Failed to crawl document with ID: {document_id}")
         return
     
-    logger.info(f"Successfully crawled document: {document_data.get('document_info', {}).get('document_title', 'Unknown')}")
+    logger.info(f"Successfully crawled document: {document_data.get('document_info', {}).get('document_title', 'unknown')}")
     
     # Initialize chunker with OpenAI client
     chunker = VBPLChunker(openai_client=openai_client)
@@ -207,8 +207,8 @@ def _extract_articles_from_parts(parts):
             articles.extend(_extract_articles_from_parts(children))
             
         else:
-            # Unknown type - log warning
-            logger.warning(f"Unknown part type encountered: {part_type}")
+            # unknown type - log warning
+            logger.warning(f"unknown part type encountered: {part_type}")
     return articles
 
 def embedding_dieu_data(dieu_id):

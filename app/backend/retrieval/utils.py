@@ -33,7 +33,7 @@ def insert(documents: List[Document]):
         documents_with_embeddings = document_embedder.run(documents=documents)["documents"]
         writer.run(documents=documents_with_embeddings)
     else:
-        raise ValueError(f"Unknown document store type for insertion: {document_store_type}")
+        raise ValueError(f"unknown document store type for insertion: {document_store_type}")
 
 
 def search(query: str) -> List[Document]:
@@ -64,7 +64,7 @@ def search(query: str) -> List[Document]:
         results = retriever.run(query_embedding=query_embedding)
         return results["documents"]
     else:
-        raise ValueError(f"Unknown document store type for searching: {document_store_type}")
+        raise ValueError(f"unknown document store type for searching: {document_store_type}")
 
 
 def generate_response(
@@ -117,9 +117,9 @@ def ask_question(query: str, **kwargs) -> dict:
             if hasattr(doc, 'meta') and doc.meta:
                 doc_meta = {
                     "score": getattr(doc, 'score', None),
-                    "source": doc.meta.get('source', 'Unknown'),
-                    "title": doc.meta.get('title', 'Unknown'),
-                    "article_id": doc.meta.get('article_id', 'Unknown')
+                    "source": doc.meta.get('source', 'unknown'),
+                    "title": doc.meta.get('title', 'unknown'),
+                    "article_id": doc.meta.get('article_id', 'unknown')
                 }
                 metadata["document_sources"].append(doc_meta)
         

@@ -23,7 +23,7 @@ class DocumentStoreFactory:
         elif document_store_type == "qdrant_hybrid":
             return get_qdrant_hybrid_document_store()
         else:
-            raise ValueError(f"Unknown document store type: {document_store_type}")
+            raise ValueError(f"unknown document store type: {document_store_type}")
 
 
 document_store = DocumentStoreFactory.get_document_store()

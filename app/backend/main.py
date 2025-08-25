@@ -1,32 +1,102 @@
-import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import JSONResponse
+import logging
+import uvicorn
+from contextlib import asynccontextmanager
+import time
 
 from backend.core.config import settings
+from backend.api.routes import router
+from backend.services import chat_service
+from backend.core.logging import setup_logging
+
+# Setup colored logging
+setup_logging(
+    log_level="DEBUG" if settings.DEBUG_MODE else "INFO",
+    log_file="logs/app.log" if not settings.DEBUG_MODE else None
+)
+
+logger = logging.getLogger(__name__)
 
 # Create FastAPI application
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    description=settings.PROJECT_DESCRIPTION,
-    version=settings.VERSION,
+    title="Law Chatbot API",
+    description="Vietnamese Legal Document Chatbot API using Qdrant, Neo4j, and LLM",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# Set up CORS
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],  # Configure as needed for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Include router
+app.include_router(router, prefix="/api/v1")
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Global exception handler."""
+    logger.error(f"Unhandled exception: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "message": "An unexpected error occurred",
+            "detail": str(exc) if settings.DEBUG_MODE else "Internal server error"
+        }
+    )
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all HTTP requests with colors."""
+    start_time = time.time()
+    
+    # Log incoming request
+    logger.info(f"📥 {request.method} {request.url.path} - Client: {request.client.host if request.client else 'unknown'}")
+    
+    response = await call_next(request)
+    
+    process_time = time.time() - start_time
+    
+    # Choose emoji and log level based on status code
+    if response.status_code < 300:
+        emoji = "✅"
+        log_level = logging.INFO
+    elif response.status_code < 400:
+        emoji = "🔄"
+        log_level = logging.INFO
+    elif response.status_code < 500:
+        emoji = "⚠️"
+        log_level = logging.WARNING
+    else:
+        emoji = "❌"
+        log_level = logging.ERROR
+    
+    logger.log(
+        log_level,
+        f"📤 {emoji} {request.method} {request.url.path} - "
+        f"Status: {response.status_code} - "
+        f"Time: {process_time:.3f}s"
+    )
+    
+    return response
+
+
 if __name__ == "__main__":
+    import time
+    
     uvicorn.run(
-        "__main__:app",
-        host=settings.HOST,
-        port=settings.PORT,
+        "main:app",
+        host=settings.host,
+        port=settings.port,
         reload=settings.DEBUG_MODE,
+        log_level="info"
     )

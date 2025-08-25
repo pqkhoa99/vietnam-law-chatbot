@@ -293,7 +293,7 @@ class VBPLCrawler:
             Tuple of (all_links, item_ids)
         """
         if category not in self.categories:
-            raise ValueError(f"Unknown category: {category}. Available: {list(self.categories.keys())}")
+            raise ValueError(f"unknown category: {category}. Available: {list(self.categories.keys())}")
         
         # Use category's default max_pages if not specified
         if max_pages is None:
