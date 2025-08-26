@@ -61,7 +61,7 @@ export const authAPI = {
 // Chat API calls
 export const chatAPI = {
   sendMessage: async (message) => {
-    const response = await api.post('/api/chat/message', {
+    const response = await api.post('/api/v1/chat', {
       message: message,
     });
     return response.data;

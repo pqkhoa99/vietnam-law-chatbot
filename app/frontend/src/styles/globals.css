@@ -161,7 +161,7 @@ body {
 /* MAIN APP LAYOUT */
 .app {
   width: 100%;
-  max-width: var(--maxw);
+  /* max-width: var(--maxw); */
   background: var(--bg-800);
   border-radius: 16px;
   overflow: hidden;
@@ -170,7 +170,7 @@ body {
   gap: 0;
   box-shadow: var(--shadow);
   border: 1px solid var(--border-color);
-  min-height: 720px;
+  height: 80vh;
 }
 
 /* LEFT SIDEBAR */
@@ -310,6 +310,105 @@ body {
   background: linear-gradient(90deg,var(--accent),var(--accent-2));
   color: #fff;
   border: none;
+}
+
+/* MARKDOWN STYLES IN MESSAGES */
+.msg h1, .msg h2, .msg h3, .msg h4, .msg h5, .msg h6 {
+  color: var(--accent);
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+}
+
+.msg h3 {
+  font-size: 16px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+}
+
+.msg p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.msg ul, .msg ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.msg li {
+  margin: 4px 0;
+}
+
+.msg strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.msg em {
+  color: var(--accent-2);
+  font-style: italic;
+}
+
+.msg code {
+  background: var(--card);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  border: 1px solid var(--border-color);
+}
+
+.msg pre {
+  background: var(--card);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  margin: 8px 0;
+}
+
+.msg blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+  margin: 8px 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.msg a {
+  color: var(--accent-2);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.msg a:hover {
+  border-bottom-color: var(--accent-2);
+}
+
+.msg hr {
+  border: none;
+  height: 1px;
+  background: var(--border-color);
+  margin: 16px 0;
+}
+
+.msg table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.msg th, .msg td {
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.msg th {
+  background: var(--card);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* COMPOSER */
