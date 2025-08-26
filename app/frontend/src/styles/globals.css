@@ -680,3 +680,392 @@ body {
 .citation-item a:hover {
   text-decoration: underline;
 }
+
+/* Related Documents Styles */
+.related-documents {
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.related-documents hr {
+  border: none;
+  height: 1px;
+  background: var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.related-documents h3 {
+  color: var(--accent);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.document-item {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.document-item p {
+  margin-bottom: 0.5rem;
+}
+
+.document-item strong {
+  color: var(--text);
+}
+
+.document-item em {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.relationships {
+  margin-top: 0.75rem;
+  padding-left: 1rem;
+}
+
+.relationships ul {
+  margin-left: 1rem;
+  margin-top: 0.5rem;
+}
+
+.relationships li {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.relationships a {
+  color: var(--accent-2);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.relationships a:hover {
+  text-decoration: underline;
+}
+
+/* Relationship grouping styles */
+.relationship-section {
+  margin-bottom: 1rem;
+}
+
+.relationship-group {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-2);
+}
+
+.relationship-title {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.relationship-group ul {
+  margin-left: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.relationship-group li {
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+  padding: 0.25rem 0;
+}
+
+/* Dialog styles */
+.document-dialog {
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  max-width: 80vw;
+  max-height: 80vh;
+  width: auto;
+  background: var(--bg-800);
+  color: var(--text);
+}
+
+.document-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--glass);
+  border-radius: var(--radius) var(--radius) 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.1rem;
+}
+
+.dialog-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.5rem;
+  font-weight: normal;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.dialog-close:hover {
+  background: var(--glass);
+  color: var(--text);
+}
+
+.dialog-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(80vh - 100px);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  hyphens: auto;
+}
+
+.dialog-body h1,
+.dialog-body h2,
+.dialog-body h3,
+.dialog-body h4,
+.dialog-body h5,
+.dialog-body h6 {
+  font-size: 1.1rem;
+  margin: 1rem 0 0.5rem 0;
+  color: var(--accent);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.dialog-body h1:first-child,
+.dialog-body h2:first-child,
+.dialog-body h3:first-child,
+.dialog-body h4:first-child,
+.dialog-body h5:first-child,
+.dialog-body h6:first-child {
+  margin-top: 0;
+}
+
+.dialog-body p {
+  margin: 0.75rem 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.dialog-body ul,
+.dialog-body ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.dialog-body li {
+  margin: 0.5rem 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.dialog-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.dialog-body em {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.dialog-body pre {
+  background: var(--glass);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+.dialog-body code {
+  background: var(--glass);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 0.9rem;
+  word-wrap: break-word;
+}
+
+.dialog-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  table-layout: fixed;
+}
+
+.dialog-body th,
+.dialog-body td {
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  vertical-align: top;
+}
+
+.dialog-body blockquote {
+  border-left: 3px solid var(--accent-2);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Document title link styles */
+.document-title-link {
+  cursor: pointer;
+  color: var(--accent);
+  text-decoration: underline;
+  transition: color 0.2s ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.document-title-link:hover {
+  color: var(--accent-2);
+}
+
+/* Document metadata styles */
+.document-metadata {
+  margin: 0.75rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.metadata-item {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.metadata-item strong {
+  color: var(--text);
+  margin-right: 0.25rem;
+}
+
+/* Document content styles */
+.document-content {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.document-content h1,
+.document-content h2,
+.document-content h3,
+.document-content h4,
+.document-content h5,
+.document-content h6 {
+  color: var(--accent);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.document-content h1:first-child,
+.document-content h2:first-child,
+.document-content h3:first-child,
+.document-content h4:first-child,
+.document-content h5:first-child,
+.document-content h6:first-child {
+  margin-top: 0;
+}
+
+.document-content p {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.document-content ul,
+.document-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.document-content li {
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+}
+
+.document-content blockquote {
+  border-left: 3px solid var(--accent-2);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.document-content code {
+  background: var(--glass);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.document-content pre {
+  background: var(--glass);
+  padding: 1rem;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  margin: 1rem 0;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.document-content pre code {
+  background: none;
+  padding: 0;
+}

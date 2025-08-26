@@ -128,53 +128,17 @@ const ChatInterface = () => {
         // Format the response with markdown content and related documents
         let formattedResponse = response.message;
         
-        // Add related documents section if they exist
-        if (response.related_documents && response.related_documents.length > 0) {
-          formattedResponse += '\n\n---\n\n### 📚 Tài liệu liên quan\n\n';
-          
-          response.related_documents.forEach((doc, index) => {
-            formattedResponse += `**${index + 1}. ${doc.title}** (${doc.document_id})\n`;
-            formattedResponse += `*Điểm tương đồng: ${(doc.score * 100).toFixed(1)}%*\n\n`;
-            
-            // Show relationships if they exist
-            if (doc.relationships && (doc.relationships.incoming.length > 0 || doc.relationships.outgoing.length > 0)) {
-              formattedResponse += '**Mối quan hệ pháp lý:**\n';
-              
-              // Incoming relationships (bị sửa đổi bổ sung)
-              if (doc.relationships.incoming.length > 0) {
-                formattedResponse += '- **Bị sửa đổi bổ sung bởi:**\n';
-                doc.relationships.incoming.forEach(rel => {
-                  const content = rel.content || 'N/A';
-                  const truncatedContent = content.length > 150 ? content.substring(0, 150) + '...' : content;
-                  formattedResponse += `  - [${rel.document_id}](${rel.document_id}): ${truncatedContent}\n`;
-                });
-              }
-              
-              // Outgoing relationships (sửa đổi bổ sung)
-              if (doc.relationships.outgoing.length > 0) {
-                formattedResponse += '- **Sửa đổi bổ sung:**\n';
-                doc.relationships.outgoing.forEach(rel => {
-                  const content = rel.content || 'N/A';
-                  const truncatedContent = content.length > 150 ? content.substring(0, 150) + '...' : content;
-                  formattedResponse += `  - [${rel.document_id}](${rel.document_id}): ${truncatedContent}\n`;
-                });
-              }
-            }
-            
-            formattedResponse += '\n';
-          });
-        }
-        
         // Add metadata if available
         if (response.metadata && response.metadata.processing_time) {
           formattedResponse += `\n*Thời gian xử lý: ${response.metadata.processing_time.toFixed(2)}s*`;
         }
-        
+
         const botMessage = {
           id: Date.now() + 1,
           message: formattedResponse,
           type: 'bot',
           timestamp: new Date(),
+          relatedDocuments: response.related_documents || null, // Pass related documents separately
         };
         setMessages(prev => [...prev, botMessage]);
       } catch (error) {
@@ -225,6 +189,7 @@ const ChatInterface = () => {
             message={msg.message}
             type={msg.type}
             timestamp={msg.timestamp}
+            relatedDocuments={msg.relatedDocuments}
           />
         ))}
         {isLoading && (
