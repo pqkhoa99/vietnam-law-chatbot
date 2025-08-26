@@ -1,0 +1,1179 @@
+
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>URA-xLaw — Chatbot Demo</title>
+
+<!-- Inter font -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<!-- Font Awesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+:root{
+--bg-900: #071022;
+--bg-800: #0b1220;
+--card: rgba(255,255,255,0.03);
+--muted: #9aa7b8;
+--text: #e6f0f2;
+--accent: #6ee7b7;
+--accent-2: #7dd3fc;
+--glass: rgba(255,255,255,0.03);
+--radius: 12px;
+--maxw: 1200px;
+--shadow: 0 10px 30px rgba(2,6,23,0.6);
+--border-color: rgba(255,255,255,0.04);
+--success: #6ee7b7;
+--warning: #facc15;
+--danger: #f87171;
+}
+
+html[data-theme='light'] {
+--bg-900: #f0f2f5;
+--bg-800: #ffffff;
+--card: #ffffff;
+--muted: #5f6c7b;
+--text: #1c2026;
+--accent: #007bff;
+--accent-2: #00c6ff;
+--glass: rgba(0,0,0,0.03);
+--shadow: 0 10px 30px rgba(0,0,0,0.1);
+--border-color: rgba(0,0,0,0.08);
+--success: #28a745;
+--warning: #ffc107;
+--danger: #dc3545;
+}
+
+/* Reset */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+margin:0;
+font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;
+background: var(--bg-900);
+color:var(--text);
+-webkit-font-smoothing:antialiased;
+-moz-osx-font-smoothing:grayscale;
+display:flex;
+justify-content:center;
+align-items: center;
+padding:28px;
+transition: background 0.3s ease, color 0.3s ease;
+}
+
+.screen {
+display: none;
+}
+.screen.active {
+display: block;
+}
+
+/* LOGIN SCREEN */
+.login-container {
+width: 100%;
+max-width: 400px;
+background: var(--bg-800);
+border-radius: 16px;
+padding: 40px;
+box-shadow: var(--shadow);
+border: 1px solid var(--border-color);
+text-align: center;
+}
+
+.login-logo {
+width: 80px;
+height: 80px;
+border-radius: 16px;
+background: linear-gradient(135deg,var(--accent),var(--accent-2));
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: 800;
+color: #fff;
+font-size: 24px;
+margin: 0 auto 20px;
+box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+
+.login-title {
+font-size: 24px;
+font-weight: 700;
+margin-bottom: 8px;
+}
+
+.login-subtitle {
+color: var(--muted);
+margin-bottom: 32px;
+}
+
+.login-form {
+display: flex;
+flex-direction: column;
+gap: 16px;
+}
+
+.form-group {
+text-align: left;
+}
+
+.form-group label {
+display: block;
+margin-bottom: 8px;
+font-weight: 600;
+color: var(--text);
+}
+
+.form-group input {
+width: 100%;
+padding: 12px;
+border-radius: 12px;
+border: 1px solid var(--border-color);
+background: transparent;
+color: var(--text);
+font-family: inherit;
+}
+
+.form-group input:focus {
+outline: none;
+border-color: var(--accent);
+box-shadow: 0 0 0 2px rgba(110,231,183,0.1);
+}
+
+.login-btn {
+width: 100%;
+padding: 12px;
+border-radius: 12px;
+border: none;
+background: linear-gradient(90deg,var(--accent),var(--accent-2));
+color: #fff;
+font-weight: 700;
+font-family: inherit;
+cursor: pointer;
+margin-top: 8px;
+}
+
+.login-btn:hover {
+transform: translateY(-1px);
+box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.app {
+width:100%;
+max-width:var(--maxw);
+background: var(--bg-800);
+border-radius:16px;
+overflow:hidden;
+display:grid;
+grid-template-columns:260px 1fr 320px;
+gap:0;
+box-shadow: var(--shadow);
+border:1px solid var(--border-color);
+min-height:720px;
+}
+
+/* LEFT SIDEBAR */
+.sidebar{
+padding:20px;
+background: linear-gradient(180deg, var(--glass), transparent);
+border-right:1px solid var(--border-color);
+display: flex;
+flex-direction: column;
+}
+.brand{
+display:flex;align-items:center;gap:12px;margin-bottom:18px;
+}
+.brand .logo{
+width:48px;height:48px;border-radius:10px;
+background:linear-gradient(135deg,var(--accent),var(--accent-2));
+display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;
+box-shadow:0 6px 18px rgba(0,0,0,0.2);
+}
+.brand h1{font-size:14px;margin:0}
+.brand p{margin:0;color:var(--muted);font-size:12px}
+
+.nav{
+margin-top:18px;
+}
+.nav a{
+display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--text);
+text-decoration:none;font-weight:600;font-size:14px;margin-bottom:8px;
+}
+.nav a:hover, .nav a.active{background:var(--glass)}
+.nav a i {
+width: 20px;
+text-align: center;
+color: var(--muted);
+}
+.nav a:hover i, .nav a.active i {
+color: var(--accent);
+}
+
+.search-docs{
+margin-top:18px;
+display:flex;gap:8px;
+}
+.search-docs input{
+flex:1;padding:10px;border-radius:10px;border:1px solid var(--border-color);
+background:transparent;color:var(--text);
+}
+.search-docs button{
+padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;
+font-family: inherit;
+}
+
+.recent{
+margin-top:18px;
+font-size:13px;color:var(--muted)
+}
+.recent .item{display:flex;justify-content:space-between;padding:8px;border-radius:8px;margin-top:8px;background:transparent;border:1px solid var(--border-color)}
+.recent .item small{color:var(--muted)}
+
+/* CENTER — Chat area */
+.chat{
+display:flex;flex-direction:column;padding:18px 20px;
+gap:12px;
+background: var(--bg-900);
+}
+
+.chat-header{
+display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:10px;background:var(--bg-800);
+border:1px solid var(--border-color);
+}
+.chat-header .title{font-weight:700}
+.chat-header .meta{margin-left:auto;color:var(--muted);font-size:13px}
+
+.messages{
+flex:1;padding:18px;border-radius:12px;background:var(--bg-800);
+overflow:auto;border:1px solid var(--border-color);
+display:flex;flex-direction:column;gap:18px;
+margin-top:8px;
+}
+
+/* message bubble styles */
+.msg{max-width:85%;padding:14px 16px;border-radius:12px;line-height:1.5;font-size:14px}
+.msg.bot{
+align-self:flex-start;background:var(--bg-900);
+border:1px solid var(--border-color);
+}
+.msg.user{
+align-self:flex-end;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;border:none;
+}
+
+.msg .meta-line{display:flex;gap:8px;margin-top:8px;font-size:12px;color:var(--muted)}
+.msg .citation{
+margin-top:8px;padding:10px;border-radius:8px;background:var(--glass);border:1px solid var(--border-color);font-size:13px;color:var(--muted)
+}
+
+.answer-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.answer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-badge.valid { background-color: rgba(110, 231, 183, 0.2); color: var(--success); }
+.status-badge.expired { background-color: rgba(248, 113, 113, 0.2); color: var(--danger); }
+.status-badge.draft { background-color: rgba(250, 204, 21, 0.2); color: var(--warning); }
+
+
+.answer-citations {
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.citation-item {
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--glass);
+    border: 1px solid var(--border-color);
+    font-size: 13px;
+    color: var(--text);
+}
+.citation-item a { color: var(--accent); text-decoration: none; }
+.citation-item a:hover { text-decoration: underline; }
+.citation-item .source { font-weight: 600; }
+.citation-item .path { font-size: 12px; color: var(--muted); cursor: pointer; margin-left:8px;}
+.citation-item .path:hover { color: var(--accent-2); }
+
+
+.answer-actions {
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: var(--glass);
+    border: 1px solid var(--border-color);
+    color: var(--muted);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.action-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); border-color: var(--accent); }
+
+/* Diff & Checklist styles */
+.diff-content del { background-color: rgba(248, 113, 113, 0.2); color: var(--danger); text-decoration: none; padding: 2px 4px; border-radius: 4px; }
+.diff-content ins { background-color: rgba(110, 231, 183, 0.2); color: var(--success); text-decoration: none; padding: 2px 4px; border-radius: 4px; }
+.checklist ul { list-style: none; padding-left: 0; }
+.checklist li { margin-bottom: 8px; padding-left: 24px; position: relative; }
+.checklist li::before { content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; left: 0; color: var(--success); }
+.checklist li .cite { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
+
+
+.composer{
+margin-top:12px;display:flex;gap:10px;align-items:flex-end;
+}
+
+.composer-main {
+flex: 1;
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+
+.composer-input {
+display: flex;
+align-items: center;
+background: var(--bg-800);
+border: 1px solid var(--border-color);
+border-radius: 12px;
+overflow: hidden;
+}
+
+.composer input{
+flex:1;padding:12px;border:none;background:transparent;color:var(--text);
+outline: none;
+}
+
+.composer-tools {
+display: flex;
+align-items: center;
+gap: 4px;
+padding: 0 8px;
+}
+
+.tool-btn {
+width: 32px;
+height: 32px;
+border: none;
+background: transparent;
+border-radius: 8px;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+color: var(--muted);
+font-size: 16px;
+transition: all 0.2s;
+}
+
+.tool-btn:hover {
+background: var(--glass);
+color: var(--accent);
+}
+
+.composer .send-btn {
+padding: 0;
+width: 44px;
+height: 44px;
+border-radius: 12px;
+border: none;
+background: linear-gradient(90deg,var(--accent),var(--accent-2));
+color: #fff;
+font-size: 18px;
+font-weight: 800;
+cursor: pointer;
+font-family: inherit;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.composer .send-btn:hover {
+transform: scale(1.05);
+box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+/* RIGHT PANEL — References */
+.panel{
+padding:20px;border-left:1px solid var(--border-color);
+background: linear-gradient(180deg, var(--glass), transparent);
+}
+.panel h3{margin:0 0 10px 0;color:var(--accent)}
+.panel .doc-card{
+background:var(--card);padding:12px;border-radius:10px;margin-bottom:12px;border:1px solid var(--border-color)
+}
+.doc-card .title{font-weight:700}
+.doc-card .meta{font-size:13px;color:var(--muted);margin-top:6px}
+
+.shortcuts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--glass);
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.chip:hover{background:rgba(255,255,255,0.05); color: var(--text); border-color: var(--accent);}
+.chip i { color: var(--accent-2); }
+
+
+/* Logout, Upgrade & Theme Switcher buttons */
+.sidebar-footer {
+margin-top: auto;
+padding-top: 20px;
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+.footer-btn {
+padding: 8px 12px;
+border: 1px solid var(--border-color);
+background: transparent;
+color: var(--muted);
+border-radius: 8px;
+cursor: pointer;
+font-family: inherit;
+font-size: 13px;
+width: 100%;
+text-align: left;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.footer-btn:hover {
+background: var(--glass);
+color: var(--text);
+}
+
+.upgrade-btn {
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(90deg,var(--accent),var(--accent-2));
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    font-family: inherit;
+}
+.upgrade-btn i { margin-right: 8px; }
+
+/* MODAL STYLES */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: var(--bg-800);
+    color: var(--text);
+    padding: 24px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 1100px;
+    box-shadow: var(--shadow);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-close {
+    color: var(--muted);
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.modal-close:hover,
+.modal-close:focus {
+    color: var(--accent);
+}
+
+.modal-header {
+    margin-bottom: 20px;
+}
+.modal-header h2 {
+    margin: 0;
+    color: var(--text);
+}
+
+.plans-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+.plan-card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+}
+.plan-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+}
+
+.plan-card h3 {
+    font-size: 20px;
+    color: var(--accent-2);
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.plan-card .audience {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 16px;
+    min-height: 40px;
+}
+
+.plan-card ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    flex-grow: 1;
+}
+
+.plan-card ul li {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+}
+.plan-card ul li i {
+    color: var(--accent);
+    margin-right: 8px;
+    margin-top: 4px;
+}
+
+.plan-card .price {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text);
+}
+.plan-card .price small {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted);
+}
+
+.choose-plan-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(90deg,var(--accent),var(--accent-2));
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.plan-card.current {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(110, 231, 183, 0.2);
+    position: relative;
+}
+
+.plan-card .current-badge {
+    display: none; /* Hide by default */
+    position: absolute;
+    top: -1px;
+    right: 15px;
+    background: var(--accent);
+    color: var(--bg-900);
+    padding: 3px 10px;
+    border-radius: 0 0 8px 8px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.plan-card.current .current-badge {
+    display: block; /* Show only on the current plan */
+}
+
+.plan-card.current .choose-plan-btn {
+    background: var(--muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+
+/* small screens */
+@media (max-width:1000px){
+body {
+padding: 0;
+align-items: stretch;
+}
+.app{
+grid-template-columns:1fr;
+min-height:100vh;
+border-radius: 0;
+}
+.panel{display:none}
+.sidebar{
+grid-row: 2;
+display:flex;
+flex-direction:row;
+overflow:auto;
+padding:12px;
+align-items: center;
+}
+.nav{display:flex;gap:8px; margin-top: 0;}
+.nav a{min-width:auto;white-space:nowrap; flex-direction: column; gap: 4px; padding: 8px;}
+.nav a span { font-size: 10px; }
+.brand, .search-docs, .recent { display: none; }
+.sidebar-footer { flex-direction: row; margin-left: auto; gap: 12px; }
+}
+
+/* print */
+@media print{
+body{background:white;color:black}
+.app{box-shadow:none;border:none;grid-template-columns:1fr}
+.sidebar,.panel,.composer{display:none}
+.messages{border:none}
+}
+
+</style>
+
+</head>
+<body data-theme="dark">
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="screen active">
+<div class="login-container">
+<div class="login-logo">URA</div>
+<h2 class="login-title">Đăng nhập URA-xLaw</h2>
+<p class="login-subtitle">Truy cập hệ thống AI pháp lý cho nhân viên ngân hàng</p>
+
+<form class="login-form" id="login-form">
+    <div class="form-group">
+      <label for="staff-id">Mã nhân viên</label>
+      <input type="text" id="staff-id" name="staff-id" placeholder="Nhập mã nhân viên" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Mật khẩu</label>
+      <input type="password" id="password" name="password" placeholder="Nhập mật khẩu" required>
+    </div>
+    <button type="submit" class="login-btn">Đăng nhập</button>
+  </form>
+</div>
+</div>
+
+<!-- MAIN APP SCREEN -->
+<div id="app-screen" class="screen">
+<div class="app" role="application" aria-label="URA-xLaw Chatbot">
+<!-- LEFT -->
+<aside class="sidebar" aria-label="Thanh điều hướng chính">
+<div>
+<div class="brand" role="banner">
+<div class="logo">URA</div>
+<div>
+<h1 style="font-size:14px;margin-bottom:4px">URA-xLaw</h1>
+<p style="margin:0">AI pháp lý cho Ngân hàng</p>
+</div>
+</div>
+
+<nav class="nav" aria-label="Điều hướng chính">
+      <a href="#" class="active"><i class="fas fa-comments"></i> <span>Chat</span></a>
+      <a href="#"><i class="fas fa-file-alt"></i> <span>Văn bản</span></a>
+      <a href="#"><i class="fas fa-tasks"></i> <span>Checklist</span></a>
+      <a href="#"><i class="fas fa-history"></i> <span>Lịch sử</span></a>
+    </nav>
+
+    <div class="search-docs" aria-hidden="false" style="margin-top:16px">
+      <input placeholder="Tìm văn bản, điều, khoản..." aria-label="Tìm kiếm văn bản" />
+      <button><i class="fas fa-search"></i></button>
+    </div>
+
+    <div class="recent" aria-label="Truy vấn gần đây" style="margin-top:14px">
+      <div style="font-weight:700;color:var(--muted)">Gần đây</div>
+      <div class="item"><div>Checklist mở thẻ tín dụng</div><small>14:02 • hôm nay</small></div>
+      <div class="item"><div>So sánh NĐ 10 và 99</div><small>11:51 • hôm nay</small></div>
+      <div class="item"><div>Điều kiện vay thế chấp</div><small>09:33 • 2 Thg 8</small></div>
+    </div>
+</div>    
+    <div class="sidebar-footer">
+      <button class="upgrade-btn" onclick="openUpgradeModal()">
+        <i class="fas fa-rocket"></i> Nâng cấp
+      </button>
+      <button class="footer-btn" id="theme-switcher" title="Chuyển đổi giao diện">
+        <i class="fas fa-sun"></i> <span class="footer-btn-text">Chế độ sáng</span>
+      </button>
+      <button class="footer-btn" onclick="logout()" title="Đăng xuất">
+        <i class="fas fa-sign-out-alt"></i> <span class="footer-btn-text">Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- CENTER: chat -->
+  <main class="chat" aria-live="polite">
+    <div class="chat-header">
+      <div>
+        <div style="font-size:13px;color:var(--muted)">Trò chuyện với</div>
+        <div class="title">Trợ lý Pháp lý URA</div>
+      </div>
+      <div class="meta" id="model-status">Model: URA-Agent-v2.1 • KB cập nhật: 09/08/2025</div>
+    </div>
+
+    <div class="messages" id="messages" tabindex="0" role="log" aria-label="Tin nhắn">
+      <!-- Bot message -->
+      <div class="msg bot" role="article" aria-label="Tin nhắn từ trợ lý">
+        <div><strong>Xin chào!</strong> Tôi là trợ lý pháp lý URA-xLaw. Tôi có thể giúp bạn tra cứu, so sánh, và tạo checklist tuân thủ từ các văn bản pháp luật ngân hàng.
+        <br><br>Bạn có thể thử các câu hỏi sau hoặc dùng các nút "Tác vụ Nâng cao" ở thanh bên phải:
+        <ul>
+            <li><code>Điều kiện cho vay thế chấp là gì?</code></li>
+            <li><code>Tạo checklist tuân thủ cho việc mở thẻ tín dụng</code></li>
+            <li><code>So sánh Nghị định 10/2023 và 99/2022 về đăng ký tsđb</code></li>
+        </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Composer -->
+    <div class="composer" role="region" aria-label="Khung soạn tin">
+      <div class="composer-main">
+        <div class="composer-input">
+          <input id="message-input" placeholder="Nhập câu hỏi của bạn (vd: quy định về TSĐB)..." aria-label="Đặt một câu hỏi" />
+          <div class="composer-tools">
+            <button class="tool-btn" title="Đính kèm tệp"><i class="fas fa-paperclip"></i></button>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </main>
+
+  <!-- RIGHT: quick refs -->
+  <aside class="panel" aria-label="Tài liệu tham khảo">
+    <h3>Tham chiếu nhanh</h3>
+    <div class="doc-card">
+      <div class="title"><i class="fas fa-file-alt"></i> Thông tư 39/2016/TT-NHNN</div>
+      <div class="meta">Quy định về hoạt động cho vay</div>
+    </div>
+    <div class="doc-card">
+      <div class="title"><i class="fas fa-file-alt"></i> Thông tư 19/2016/TT-NHNN</div>
+      <div class="meta">Quy định về hoạt động thẻ ngân hàng</div>
+    </div>
+    
+    <h3 style="margin-top:16px">Tác vụ Nâng cao</h3>
+    <div class="shortcuts">
+      <div class="chip" onclick="insertShortcut('Tạo checklist tuân thủ cho việc mở thẻ tín dụng')">
+        <i class="fas fa-tasks"></i> Tạo Checklist
+      </div>
+      <div class="chip" onclick="insertShortcut('So sánh Nghị định 10/2023 và 99/2022 về đăng ký tsđb')">
+        <i class="fas fa-exchange-alt"></i> So sánh Văn bản
+      </div>
+    </div>
+  </aside>
+</div>
+</div>
+
+<!-- Upgrade Plan Modal -->
+<div id="upgrade-modal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeUpgradeModal()">&times;</span>
+    <div class="modal-header">
+      <h2>Nâng cấp gói URA-xLaw</h2>
+      <p style="color:var(--muted)">Chọn gói phù hợp với nhu cầu của bạn để mở khóa các tính năng cao cấp.</p>
+    </div>
+    <div class="plans-container">
+      <!-- Plan 1: SOLO -->
+      <div class="plan-card" data-plan="SOLO">
+        <h3>SOLO</h3>
+        <div class="audience">Cá nhân/SME</div>
+        <ul>
+          <li><i class="fas fa-check-circle"></i> Chat tra cứu + trích dẫn</li>
+          <li><i class="fas fa-check-circle"></i> LawGraph viewer</li>
+          <li><i class="fas fa-check-circle"></i> 500–1.500 câu hỏi/tháng</li>
+          <li><i class="fas fa-check-circle"></i> Export cơ bản</li>
+          <li><i class="fas fa-check-circle"></i> Email support</li>
+        </ul>
+        <div class="price">199k–399k <small>/người/tháng</small></div>
+        <button class="choose-plan-btn" onclick="choosePlan('SOLO')">Chọn gói SOLO</button>
+      </div>
+
+      <!-- Plan 2: TEAM -->
+      <div class="plan-card" data-plan="TEAM">
+        <span class="current-badge">Gói hiện tại</span>
+        <h3>TEAM</h3>
+        <div class="audience">Phòng pháp chế nhỏ/fintech (10–30 user)</div>
+        <ul>
+          <li><i class="fas fa-plus-circle"></i> Mọi quyền lợi gói SOLO</li>
+          <li><i class="fas fa-check-circle"></i> <strong>Diff & Redline</strong></li>
+          <li><i class="fas fa-check-circle"></i> <strong>Checklist tuân thủ tự động</strong></li>
+          <li><i class="fas fa-check-circle"></i> Báo cáo tuần</li>
+          <li><i class="fas fa-check-circle"></i> Webhook cảnh báo, SSO cơ bản</li>
+        </ul>
+        <div class="price">8–12 triệu <small>/tháng/tổ chức</small></div>
+        <button class="choose-plan-btn" onclick="choosePlan('TEAM')">Chọn gói TEAM</button>
+      </div>
+
+      <!-- Plan 3: ENTERPRISE CLOUD -->
+      <div class="plan-card" data-plan="ENTERPRISE CLOUD">
+        <h3>ENTERPRISE CLOUD</h3>
+        <div class="audience">TCTD/đơn vị lớn</div>
+        <ul>
+          <li><i class="fas fa-plus-circle"></i> Mọi quyền lợi gói TEAM</li>
+          <li><i class="fas fa-check-circle"></i> User theo domain</li>
+          <li><i class="fas fa-check-circle"></i> API</li>
+          <li><i class="fas fa-check-circle"></i> Namespace dữ liệu riêng</li>
+          <li><i class="fas fa-check-circle"></i> SLA 99%, hỗ trợ ưu tiên</li>
+        </ul>
+        <div class="price">60–120 triệu <small>/tháng</small></div>
+        <button class="choose-plan-btn" onclick="choosePlan('ENTERPRISE CLOUD')">Chọn gói Enterprise</button>
+      </div>
+      
+      <!-- Plan 4: ENTERPRISE SUITE -->
+      <div class="plan-card" data-plan="ENTERPRISE SUITE">
+        <h3>ENTERPRISE SUITE</h3>
+        <div class="audience">Ngân hàng cần triển khai nội bộ (on-prem)</div>
+        <ul>
+          <li><i class="fas fa-plus-circle"></i> Mọi quyền lợi gói Enterprise</li>
+          <li><i class="fas fa-check-circle"></i> Cài đặt nội bộ (UI + hệ thống)</li>
+          <li><i class="fas fa-check-circle"></i> SSO/SAML, audit trail</li>
+          <li><i class="fas fa-check-circle"></i> Giám sát Prometheus, handover CI/CD</li>
+        </ul>
+        <div class="price">Liên hệ <small><br>Phí triển khai & vận hành</small></div>
+        <button class="choose-plan-btn" onclick="choosePlan('ENTERPRISE SUITE')">Liên hệ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const themeSwitcher = document.getElementById('theme-switcher');
+const body = document.body;
+const upgradeModal = document.getElementById('upgrade-modal');
+
+themeSwitcher.addEventListener('click', () => {
+    const currentTheme = body.getAttribute('data-theme');
+    if (currentTheme === 'dark') {
+        body.setAttribute('data-theme', 'light');
+        themeSwitcher.querySelector('.footer-btn-text').textContent = 'Chế độ tối';
+        themeSwitcher.querySelector('i').className = 'fas fa-moon';
+    } else {
+        body.setAttribute('data-theme', 'dark');
+        themeSwitcher.querySelector('.footer-btn-text').textContent = 'Chế độ sáng';
+        themeSwitcher.querySelector('i').className = 'fas fa-sun';
+    }
+});
+
+// Login functionality
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    document.getElementById('login-screen').classList.remove('active');
+    document.getElementById('app-screen').classList.add('active');
+});
+
+function logout() {
+    document.getElementById('app-screen').classList.remove('active');
+    document.getElementById('login-screen').classList.add('active');
+    document.getElementById('login-form').reset();
+}
+
+function insertShortcut(text) {
+    const input = document.getElementById('message-input');
+    input.value = text;
+    input.focus();
+    sendMessage(); // Automatically send the message after inserting the shortcut
+}
+
+// --- URA-xLaw Multi-Agent Mock-up ---
+const fakeResponses = {
+    'điều kiện cho vay thế chấp là gì?': `
+        <div class="answer-card">
+            <div class="answer-header">
+                <strong>Trả lời chính</strong>
+                <span class="status-badge valid"><i class="fas fa-check-circle"></i> Còn hiệu lực</span>
+            </div>
+            <div class="answer-body">
+                Tổ chức tín dụng (TCTD) xem xét và quyết định cho vay khi khách hàng có đủ các điều kiện sau:
+                <ol>
+                    <li><b>Năng lực pháp luật và hành vi dân sự:</b> Khách hàng là pháp nhân hoặc cá nhân từ đủ 18 tuổi trở lên.</li>
+                    <li><b>Mục đích vay vốn hợp pháp.</b></li>
+                    <li><b>Phương án sử dụng vốn khả thi.</b></li>
+                    <li><b>Khả năng tài chính để trả nợ.</b></li>
+                    <li><b>Có tài sản bảo đảm (TSĐB)</b> cho khoản vay theo quy định của TCTD và pháp luật.</li>
+                </ol>
+            </div>
+            <div class="answer-citations">
+                <div class="citation-item">
+                    <span class="source"><a href="#" target="_blank">Điều 7, Thông tư 39/2016/TT-NHNN</a></span>
+                    <span class="path" onclick="alert('Đang hiển thị mini-graph...\\nTT39/2016 (Điều 7) ← Luật các TCTD 2010 (Điều 94)')"><i class="fas fa-project-diagram"></i> Explain Path</span>
+                </div>
+            </div>
+            <div class="answer-actions">
+                <button class="action-btn" onclick="alert('Đã xuất ra Word')"><i class="fas fa-file-word"></i> Export Word</button>
+                <button class="action-btn" onclick="alert('Đã xuất ra PDF')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+            </div>
+        </div>
+    `,
+    'tạo checklist mở thẻ tín dụng': `
+        <div class="answer-card">
+            <div class="answer-header">
+                <strong>Checklist: Mở Thẻ Tín Dụng</strong>
+                <span class="status-badge valid"><i class="fas fa-check-circle"></i> Còn hiệu lực</span>
+            </div>
+            <div class="answer-body checklist">
+                Dưới đây là danh mục hành động tuân thủ tự động cho quy trình phát hành thẻ tín dụng, phục vụ cho bộ phận tín dụng và kiểm soát nội bộ:
+                <ul>
+                    <li>Nhận diện và xác minh thông tin khách hàng (KYC).<span class="cite">Trích dẫn: Điều 10, Thông tư 19/2016/TT-NHNN</span></li>
+                    <li>Yêu cầu khách hàng điền vào giấy đề nghị phát hành thẻ theo mẫu của TCTD.<span class="cite">Trích dẫn: Khoản 1, Điều 10, TT 19/2016</span></li>
+                    <li>Thu thập và thẩm định hồ sơ chứng minh nhân thân (CCCD/Hộ chiếu).<span class="cite">Trích dẫn: Phụ lục, TT 19/2016</span></li>
+                    <li>Thu thập và thẩm định hồ sơ chứng minh khả năng tài chính (HĐLĐ, sao kê lương).<span class="cite">Trích dẫn: Quy định nội bộ về quản lý rủi ro tín dụng</span></li>
+                    <li>Kiểm tra lịch sử tín dụng của khách hàng trên CIC.<span class="cite">Trích dẫn: Điều 9, Thông tư 03/2013/TT-NHNN</span></li>
+                    <li>Ký kết hợp đồng phát hành và sử dụng thẻ với khách hàng.<span class="cite">Trích dẫn: Điều 13, TT 19/2016</span></li>
+                </ul>
+            </div>
+            <div class="answer-actions">
+                <button class="action-btn" onclick="alert('Đã xuất Checklist ra Word')"><i class="fas fa-file-word"></i> Export Word</button>
+                <button class="action-btn" onclick="alert('Đã xuất Checklist ra PDF')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+            </div>
+        </div>
+    `,
+    'so sánh nghị định 10/2023 và 99/2022 về đăng ký tsđb': `
+        <div class="answer-card">
+            <div class="answer-header">
+                <strong>Diff & Redline: Đăng ký Tài sản bảo đảm</strong>
+                <span class="status-badge valid"><i class="fas fa-info-circle"></i> Phân tích thay đổi</span>
+            </div>
+            <p><em>Đã chuẩn hóa thuật ngữ 'TSĐB' thành 'Tài sản bảo đảm'.</em></p>
+            <div class="answer-body diff-content">
+                Nghị định 10/2023/NĐ-CP đã sửa đổi một số quy định trong Nghị định 99/2022/NĐ-CP, đáng chú ý là về việc cấp bản sao văn bản chứng nhận đăng ký biện pháp bảo đảm:
+                <br><br>
+                <strong>Tác động nghiệp vụ:</strong> Việc bổ sung hình thức cấp bản sao điện tử giúp đẩy nhanh quá trình xử lý hồ sơ, giảm thiểu thủ tục giấy tờ cho cả ngân hàng và khách hàng.
+                <ul>
+                    <li><strong>Quy định cũ (NĐ 99/2022):</strong> <del>Cơ quan đăng ký cấp văn bản chứng nhận đăng ký biện pháp bảo đảm dưới dạng văn bản giấy.</del></li>
+                    <li><strong>Quy định mới (NĐ 10/2023):</strong> <ins>Cơ quan đăng ký cấp văn bản chứng nhận dưới dạng văn bản giấy hoặc văn bản điện tử có giá trị pháp lý tương đương.</ins></li>
+                </ul>
+            </div>
+            <div class="answer-citations">
+                 <div class="citation-item">
+                    <span class="source"><a href="#" target="_blank">Khoản 5, Điều 1, Nghị định 10/2023/NĐ-CP</a></span>
+                    <span class="path" onclick="alert('Đang hiển thị mini-graph...\\nNĐ 10/2023 (Sửa đổi) → NĐ 99/2022 (Bị sửa đổi)')"><i class="fas fa-project-diagram"></i> Explain Path</span>
+                </div>
+            </div>
+             <div class="answer-actions">
+                <button class="action-btn" onclick="alert('Đã xuất bảng so sánh ra Word')"><i class="fas fa-file-word"></i> Export Word</button>
+            </div>
+        </div>
+    `,
+    'quy định về tsđb': `
+        <div class="answer-card">
+            <div class="answer-header">
+                <strong>Trả lời chính</strong>
+                <span class="status-badge valid"><i class="fas fa-check-circle"></i> Còn hiệu lực</span>
+            </div>
+            <p><em>Đã chuẩn hóa thuật ngữ 'TSĐB' thành 'Tài sản bảo đảm'.</em></p>
+            <div class="answer-body">
+                Tài sản bảo đảm (TSĐB) dùng trong hoạt động cho vay của TCTD phải tuân thủ các quy định của Bộ luật Dân sự và các văn bản hướng dẫn. Các loại TSĐB phổ biến bao gồm:
+                <ul>
+                    <li>Bất động sản (quyền sử dụng đất, nhà ở).</li>
+                    <li>Động sản (ô tô, máy móc thiết bị).</li>
+                    <li>Giấy tờ có giá (sổ tiết kiệm, trái phiếu).</li>
+                    <li>Quyền tài sản phát sinh từ hợp đồng.</li>
+                </ul>
+                Việc đăng ký biện pháp bảo đảm đối với TSĐB là bắt buộc đối với một số loại tài sản như quyền sử dụng đất, tàu bay, tàu biển để đảm bảo hiệu lực đối kháng với người thứ ba.
+            </div>
+            <div class="answer-citations">
+                <div class="citation-item">
+                    <span class="source"><a href="#" target="_blank">Điều 295, Bộ luật Dân sự 2015</a></span>
+                </div>
+                <div class="citation-item">
+                    <span class="source"><a href="#" target="_blank">Nghị định 99/2022/NĐ-CP về đăng ký biện pháp bảo đảm</a></span>
+                </div>
+            </div>
+            <div class="answer-actions">
+                <button class="action-btn" onclick="alert('Đã xuất ra Word')"><i class="fas fa-file-word"></i> Export Word</button>
+            </div>
+        </div>
+    `
+};
+
+const noAnswerResponse = `
+    <div class="answer-card">
+        <div class="answer-header">
+            <strong>Không thể trả lời</strong>
+            <span class="status-badge warning"><i class="fas fa-exclamation-triangle"></i> No Citation, No Answer</span>
+        </div>
+        <div class="answer-body">
+            Để đảm bảo tính chính xác và giảm thiểu "ảo giác" (hallucination), tôi không thể cung cấp câu trả lời do không truy hồi được trích dẫn pháp lý đáng tin cậy và liên quan trực tiếp đến câu hỏi của bạn từ cơ sở tri thức hiện tại.
+            <br><br>
+            Vui lòng thử diễn đạt lại câu hỏi hoặc tải lên tài liệu liên quan để tôi phân tích.
+        </div>
+    </div>
+`;
+
+
+function sendMessage() {
+    const input = document.getElementById('message-input');
+    const rawMessage = input.value.trim();
+    if (!rawMessage) return;
+
+    // Normalize message for key lookup
+    const messageKey = rawMessage;
+
+    addMessage('user', rawMessage);
+    input.value = '';
+    input.focus();
+
+    // 1. Add a "thinking" message
+    const thinkingMsgId = 'msg-' + Date.now();
+    addMessage('bot', `<i class="fas fa-spinner fa-spin"></i> URA đang áp dụng các agent (Retriever, Applicability, Citation...) để xử lý...`, thinkingMsgId);
+
+    // 2. Simulate processing delay
+    setTimeout(() => {
+        const responseHtml = fakeResponses[messageKey] || noAnswerResponse;
+        
+        // 3. Replace "thinking" message with the actual response
+        const thinkingMsgElement = document.getElementById(thinkingMsgId);
+        if (thinkingMsgElement) {
+            thinkingMsgElement.innerHTML = responseHtml;
+        } else { // Fallback if element not found
+            addMessage('bot', responseHtml);
+        }
+    }, 1500 + Math.random() * 500); // Simulate network and processing time
+}
+
+
+function addMessage(sender, text, id = null) {
+    const messages = document.getElementById('messages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `msg ${sender}`;
+    if (id) {
+        msgDiv.id = id;
+    }
+    msgDiv.innerHTML = text;
+    messages.appendChild(msgDiv);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+// Handle Enter key
+document.getElementById('message-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+
+// MODAL Functions
+let currentUserPlan = 'TEAM'; 
+
+function openUpgradeModal() {
+    if (!upgradeModal) return;
+
+    const allPlanCards = upgradeModal.querySelectorAll('.plan-card');
+
+    allPlanCards.forEach(card => {
+        card.classList.remove('current');
+        const button = card.querySelector('.choose-plan-btn');
+        button.disabled = false;
+        
+        // Restore original button text
+        let planName = card.dataset.plan;
+        if (planName === 'ENTERPRISE SUITE') {
+            button.textContent = 'Liên hệ';
+        } else if (planName === 'ENTERPRISE CLOUD') {
+            button.textContent = 'Chọn gói Enterprise';
+        } 
+        else {
+            button.textContent = `Chọn gói ${planName}`;
+        }
+        
+        if (planName === currentUserPlan) {
+            card.classList.add('current');
+            button.disabled = true;
+            button.textContent = 'Gói hiện tại';
+        }
+    });
+
+    upgradeModal.style.display = 'flex';
+}
+
+function closeUpgradeModal() {
+    if (upgradeModal) upgradeModal.style.display = 'none';
+}
+
+function choosePlan(planName) {
+    alert(`Bạn đã chọn gói "${planName}". Cảm ơn bạn đã quan tâm! Chức năng này chỉ mang tính minh họa.`);
+    closeUpgradeModal();
+}
+
+// Close modal if user clicks outside of it
+window.onclick = function(event) {
+    if (event.target == upgradeModal) {
+        closeUpgradeModal();
+    }
+}
+
+// Initial theme setup
+if (body.getAttribute('data-theme') === 'dark') {
+    themeSwitcher.querySelector('.footer-btn-text').textContent = 'Chế độ sáng';
+    themeSwitcher.querySelector('i').className = 'fas fa-sun';
+} else {
+    themeSwitcher.querySelector('.footer-btn-text').textContent = 'Chế độ tối';
+    themeSwitcher.querySelector('i').className = 'fas fa-moon';
+}
+
+</script>
+
+</body>
+</html>
